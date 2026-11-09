@@ -24,5 +24,7 @@ npm run dev
 | 新增核验规则 / 状态 | `server/core/citations.ts` |
 | 新增合同风险规则 | `server/core/contract.ts` 的 `RISK_RULES` |
 | 新增 Agent 工具 | `server/agent/tools.ts` 的 `TOOL_DEFINITIONS` 与 `dispatchTool` |
-| 接新的法律数据源 | 实现 `LawDataSource` 接口（`server/core/schema.ts`） |
+| 接新的法律数据源 | 实现 `LawDataSource` 接口（`server/core/schema.ts`），降级逻辑在 `providers/datasource.ts` |
+| 新增 Skill / 事实 / 权限 / 用量规则 | `server/core/skills.ts` / `facts.ts` / `tenancy.ts` / `usage.ts` |
+| 新增 MCP 工具 | `server/agent/tools.ts` + `server/mcp/handler.ts` |
 | 新增前端面板 | `src/components/` |

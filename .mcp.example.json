@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "lexguard": {
+      "command": "npm",
+      "args": ["run", "mcp"],
+      "cwd": "请替换为本仓库的绝对路径",
+      "env": {
+        "LAW_DATASOURCE": "local"
+      }
+    }
+  }
+}

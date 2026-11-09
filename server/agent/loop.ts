@@ -1,6 +1,7 @@
 import { hasBlockingCitation, verifyText } from '../core/citations';
 import { assertOutboundAllowed, classifyData } from '../core/routing';
 import type { AuditLog } from '../core/audit';
+import type { UsageMeter } from '../core/usage';
 import type { Citation, ContractRisk, DataClass } from '../core/schema';
 import type { ChatMessage, LLMProvider, ToolCall } from '../providers/llm';
 import { buildSystemPrompt } from './prompts';
@@ -29,6 +30,7 @@ export interface AgentContext {
   llm: LLMProvider;
   toolCtx: ToolContext;
   audit: AuditLog;
+  usage?: UsageMeter;
   who: string;
   sessionId: string;
 }
@@ -80,6 +82,7 @@ export async function* runAgent(
       for await (const ev of ctx.llm.streamChat(messages, TOOL_DEFINITIONS)) {
         if (ev.type === 'delta') {
           draft += ev.text;
+          ctx.usage?.recordLLM(ctx.sessionId, ctx.who, ev.text.length);
           yield { type: 'delta', text: ev.text };
         } else {
           content = ev.content || draft;
@@ -94,6 +97,7 @@ export async function* runAgent(
     if (toolCalls.length > 0) {
       messages.push({ role: 'assistant', content: draft, tool_calls: toolCalls });
       for (const call of toolCalls) {
+        ctx.usage?.recordTool(ctx.sessionId, ctx.who, call.name);
         yield { type: 'tool_call', id: call.id, name: call.name, args: call.arguments };
         let out;
         try {

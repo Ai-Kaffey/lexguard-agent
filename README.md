@@ -48,6 +48,7 @@ npm run test        # vitest run
 npm run build       # typecheck + vite build
 npm run check       # 以上全部
 npm start           # 仅启动后端（生产模式，托管 dist/）
+npm run mcp         # 启动 MCP Server（stdio，供 Claude / WorkBuddy 等宿主接入）
 ```
 
 ### 接真实模型
@@ -175,16 +176,27 @@ flowchart TB
 
 ---
 
-## 已实现 / 未实现（如实说明）
+## 已实现（4 期 29 项全部落地）
 
-分期规划见 [ROADMAP.md](./ROADMAP.md)：**共 4 期**。
+分期规划见 [ROADMAP.md](./ROADMAP.md)。
 
 | 期 | 状态 | 内容 |
 |---|---|---|
-| 第 1 期 · 可信内核（13 项） | ✅ 已实现 | A1–A8、B1、B5、F1–F3 |
-| 第 2 期 · Agent 与工作台（9 项） | ✅ 已实现 | B2–B4、C1–C3、D1–D3 |
-| 第 3 期 · 平台化（6 项） | ⏳ 未开始 | C4 Skill 中心、C5 事实层、D4 MCP Server、E1 多租户、E2 数据源管理、E3 用量成本 |
-| 第 4 期 · 开源发布（F4） | ✅ 实现中 | 本文档、LICENSE、CI、合规映射表 |
+| 第 1 期 · 可信内核（13 项） | ✅ | A1–A8、B1、B5、F1–F3 |
+| 第 2 期 · Agent 与工作台（9 项） | ✅ | B2–B4、C1–C3、D1–D3 |
+| 第 3 期 · 平台化（6 项） | ✅ | C4 Skill 中心、C5 事实层、D4 MCP Server、E1 多租户、E2 数据源管理、E3 用量成本 |
+| 第 4 期 · 开源发布（F4） | ✅ | README、LICENSE、CI、合规映射表、公开仓库 |
+
+**验证**：51 个单测 / 8 个测试文件、typecheck、build、端到端（未签字 403 → 签字 200 四件套）、MCP stdio 实跑、GitHub Actions CI 全绿。
+
+### 第 3 期能力说明
+
+- **C4 Skill 中心**：三份版本化清单（合同审查 / 法律意见书 / 并购尽调）；同名同版本禁止覆盖，必填项逐项确认后才能完成，支持导入导出。
+- **C5 案件事实层**：每条事实强制带出处；矛盾显式挂起（不自动合并、不投票、不让模型裁决），并显式列出「应存在但缺失」的事实。
+- **D4 MCP Server**：零依赖 stdio JSON-RPC，暴露 6 个法律工具；`npm run mcp` 启动，配置见 `.mcp.example.json`。
+- **E1 多租户与伦理墙**：角色权限矩阵 + 项目级名单；被排除项目根本不出现在列表里。中文用户名走 query 参数（HTTP header 有 ByteString 限制）。
+- **E2 数据源管理**：健康检查 + 失败降级；降级后 `demo` 变 true，核验结果自动变为 `demo_only`，绝不伪装成权威核验通过。
+- **E3 用量与成本**：按会话记录 token 估算与工具调用；token 为字符数 / 4 的粗略估算，**非厂商计费口径**。
 
 ### API 一览
 
@@ -198,6 +210,13 @@ flowchart TB
 | GET | `/api/review/:sessionId` | 复核进度与待签项 |
 | GET | `/api/export/:sessionId` | 导出四件套（未签字 / 含阻断引用 → 403） |
 | GET | `/api/audit` | 审计事件与可读报告 |
+| GET | `/api/platform` | 平台汇总：Skill / 事实 / 矛盾 / 缺口 / 用量 / 数据源 / 权限 / MCP 工具 |
+| POST | `/api/skills/check` | 逐项校验 Skill 清单 |
+| POST | `/api/facts` | 写入事实（无出处 → 400） |
+| GET | `/api/usage` | 用量汇总与最近记录 |
+| POST | `/api/datasources/health` | 数据源健康检查与降级 |
+| GET | `/api/tenants/:id/matters?userId=` | 按伦理墙过滤后的可见项目 |
+| GET | `/api/mcp/tools` | MCP 工具清单与接入方式 |
 
 ---
 
@@ -215,12 +234,14 @@ C 端面向公众服务会触发生成式 AI 备案与无照执业风险；**自
 legal-agent/
 ├── server/
 │   ├── core/          schema / citations / contract / retrieval / review / routing / audit / fixtures
-│   ├── providers/     datasource（local / http）、llm（OpenAI 兼容 / Mock）
+│   │                  skills / facts / tenancy / usage（第 3 期）
+│   ├── providers/     datasource（local / http / 托管降级）、llm（OpenAI 兼容 / Mock）
 │   ├── agent/         prompts / tools / loop
+│   ├── mcp/           handler（JSON-RPC）/ index（stdio 传输）
 │   ├── eval/          dataset（评测集与指标）
 │   └── index.ts       Express + SSE + REST
-├── src/               React 工作台与三个面板
-├── tests/             Vitest 单测
+├── src/               React 工作台（引用核验 / 合同审查 / 审计 / 平台能力）
+├── tests/             Vitest 单测（8 个文件 / 51 个用例）
 ├── ROADMAP.md         分期规划
 └── README.md
 ```

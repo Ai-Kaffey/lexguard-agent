@@ -120,3 +120,100 @@ export function createDataSource(config: DataSourceConfig = { mode: 'local' }): 
 }
 
 export { FIXTURE_STATS };
+
+/**
+ * E2 数据源管理：健康检查 + 失败降级。
+ * 关键纪律：降级到演示语料后 demo 变 true，核验引擎会返回 demo_only，
+ * 绝不把降级结果伪装成权威库核验通过。
+ */
+export interface DataSourceHealth {
+  ok: boolean;
+  degraded: boolean;
+  primary: string;
+  active: string;
+  detail?: string;
+  checkedAt: string;
+}
+
+export class ManagedDataSource implements LawDataSource {
+  private degraded = false;
+  private lastError = '';
+
+  constructor(
+    private readonly primary: LawDataSource,
+    private readonly fallback: LawDataSource,
+  ) {}
+
+  get name(): string {
+    return this.degraded ? `${this.fallback.name}（已降级）` : this.primary.name;
+  }
+
+  get demo(): boolean {
+    return this.degraded ? this.fallback.demo : this.primary.demo;
+  }
+
+  get isDegraded(): boolean {
+    return this.degraded;
+  }
+
+  private async call<T>(fn: (ds: LawDataSource) => Promise<T>): Promise<T> {
+    try {
+      const result = await fn(this.primary);
+      this.degraded = false;
+      return result;
+    } catch (e) {
+      this.degraded = true;
+      this.lastError = e instanceof Error ? e.message : String(e);
+      return fn(this.fallback);
+    }
+  }
+
+  async health(): Promise<DataSourceHealth> {
+    const checkedAt = new Date().toISOString();
+    try {
+      await this.primary.allLaws();
+      this.degraded = false;
+      return { ok: true, degraded: false, primary: this.primary.name, active: this.primary.name, checkedAt };
+    } catch (e) {
+      this.degraded = true;
+      this.lastError = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        degraded: true,
+        primary: this.primary.name,
+        active: this.fallback.name,
+        detail: this.lastError,
+        checkedAt,
+      };
+    }
+  }
+
+  searchLaws(query: string): Promise<LawArticle[]> {
+    return this.call((ds) => ds.searchLaws(query));
+  }
+  getLaw(law: string, articleNo: number): Promise<LawArticle | undefined> {
+    return this.call((ds) => ds.getLaw(law, articleNo));
+  }
+  searchCases(query: string): Promise<LegalCase[]> {
+    return this.call((ds) => ds.searchCases(query));
+  }
+  getCase(caseNo: string): Promise<LegalCase | undefined> {
+    return this.call((ds) => ds.getCase(caseNo));
+  }
+  searchCompany(name: string): Promise<CompanyRecord[]> {
+    return this.call((ds) => ds.searchCompany(name));
+  }
+  allLaws(): Promise<LawArticle[]> {
+    return this.call((ds) => ds.allLaws());
+  }
+  allCases(): Promise<LegalCase[]> {
+    return this.call((ds) => ds.allCases());
+  }
+}
+
+export function createManagedDataSource(config: DataSourceConfig = { mode: 'local' }): ManagedDataSource {
+  const fallback = new LocalFixtureProvider();
+  const primary = createDataSource(config);
+  return new ManagedDataSource(primary, fallback);
+}
+

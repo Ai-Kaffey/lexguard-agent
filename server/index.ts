@@ -13,9 +13,14 @@ import {
   buildExportBundle,
 } from './core/review';
 import { classifyData } from './core/routing';
+import { FactStore } from './core/facts';
+import { SkillRegistry } from './core/skills';
+import { demoTenancy } from './core/tenancy';
+import { UsageMeter } from './core/usage';
 import type { Citation, ContractRisk } from './core/schema';
-import { FIXTURE_STATS, createDataSource } from './providers/datasource';
+import { FIXTURE_STATS, createManagedDataSource } from './providers/datasource';
 import { createLLMProvider, type ChatMessage } from './providers/llm';
+import { mcpToolList } from './mcp/handler';
 import { runAgent } from './agent/loop';
 
 const forced = process.env.LLM_PROVIDER;
@@ -31,13 +36,23 @@ const llm = createLLMProvider({
 });
 
 const dsMode = process.env.LAW_DATASOURCE === 'http' && process.env.LAW_DATASOURCE_URL ? 'http' : 'local';
-const ds = createDataSource({
+const ds = createManagedDataSource({
   mode: dsMode,
   url: process.env.LAW_DATASOURCE_URL,
   token: process.env.LAW_DATASOURCE_TOKEN,
 });
 
 const audit = new AuditLog();
+const skills = new SkillRegistry();
+const facts = new FactStore();
+const tenancy = demoTenancy();
+const usage = new UsageMeter();
+
+// 演示事实：故意放入一条冲突取值，用来展示「矛盾显式暴露、不自动合并」的能力
+facts.add({ subject: '甲公司', predicate: '注册资本', value: '1000万元', source: 'DEMO-工商摘录', demo: true, verified: false });
+facts.add({ subject: '甲公司', predicate: '注册资本', value: '1200万元', source: 'DEMO-尽调访谈纪要', demo: true, verified: false });
+facts.add({ subject: '甲公司', predicate: '涉诉记录', value: '2条', source: 'DEMO-裁判文书检索', demo: true, verified: false });
+
 const gates = new Map<string, ReviewGate>();
 const results = new Map<string, { content: string; citations: Citation[]; risks: ContractRisk[] }>();
 
@@ -85,7 +100,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
   const send = (event: unknown) => {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   };
-  const ctx = { llm, toolCtx: { ds }, audit, who, sessionId };
+  const ctx = { llm, toolCtx: { ds }, audit, usage, who, sessionId };
   // 新一轮对话重置复核闸门，避免沿用上一轮的签字记录
   gates.set(sessionId, new ReviewGate());
   const gate = gates.get(sessionId)!;
@@ -212,6 +227,81 @@ app.get('/api/export/:sessionId', (req: Request, res: Response) => {
 
 app.get('/api/audit', (_req: Request, res: Response) => {
   res.json({ count: audit.size(), events: audit.all(), report: audit.toReport() });
+});
+
+/* ---------------- 第 3 期：平台化能力 API ---------------- */
+
+/** 一次性汇总，供工作台「平台」面板渲染 */
+app.get('/api/platform', (_req: Request, res: Response) => {
+  res.json({
+    skills: skills.list(),
+    facts: facts.list(),
+    contradictions: facts.contradictions(),
+    gaps: facts.missing('甲公司', ['注册资本', '涉诉记录', '重大合同', '知识产权', '劳动用工']),
+    usage: usage.summary(),
+    datasource: { name: ds.name, demo: ds.demo, degraded: ds.isDegraded, stats: FIXTURE_STATS },
+    tenancy: { tenantId: 'tenant-demo', matters: tenancy.getTenant('tenant-demo')?.matters ?? [] },
+    mcpTools: mcpToolList().map((t) => t.name),
+  });
+});
+
+/** C4 逐项确认 */
+app.post('/api/skills/check', (req: Request, res: Response) => {
+  const { id, answeredIds = [], version } = req.body as {
+    id?: string; answeredIds?: string[]; version?: string;
+  };
+  if (!id) {
+    res.status(400).json({ error: 'id 必填' });
+    return;
+  }
+  res.json(skills.runChecklist(id, answeredIds, version));
+});
+
+/** C5 新增事实：无出处一律拒绝 */
+app.post('/api/facts', (req: Request, res: Response) => {
+  const { subject, predicate, value, source } = req.body as Record<string, string>;
+  try {
+    const fact = facts.add({
+      subject: subject ?? '', predicate: predicate ?? '', value: value ?? '',
+      source: source ?? '', demo: true, verified: false,
+    });
+    audit.record({ who: 'api', dataClass: 'C', action: 'fact_add', detail: fact.id });
+    res.json(fact);
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : String(e) });
+  }
+});
+
+/** E3 用量（token 为估算，非计费口径） */
+app.get('/api/usage', (_req: Request, res: Response) => {
+  res.json({ ...usage.summary(), recent: usage.all().slice(-20) });
+});
+
+/** E2 数据源健康检查；失败会降级到 DEMO，并在核验结果里显式体现 */
+app.post('/api/datasources/health', async (_req: Request, res: Response) => {
+  const health = await ds.health();
+  audit.record({
+    who: 'api', dataClass: 'C', action: 'datasource_health',
+    detail: `${health.ok ? '正常' : '降级'}｜${health.active}`,
+  });
+  res.json(health);
+});
+
+/** E1 伦理墙：只返回该用户可见的项目 */
+app.get('/api/tenants/:id/matters', (req: Request, res: Response) => {
+  // 中文用户名不能放 HTTP header（ByteString 限制），统一走 query 参数
+  const userId = String(req.query.userId ?? req.header('x-user-id') ?? 'anonymous');
+  res.json({
+    userId,
+    tenantId: req.params.id,
+    matters: tenancy.listMatters(userId, req.params.id),
+    note: '伦理墙：被 blockedUsers 排除或不在 allowedUsers 中的项目不会出现在列表里',
+  });
+});
+
+/** D4 暴露的 MCP 工具清单 */
+app.get('/api/mcp/tools', (_req: Request, res: Response) => {
+  res.json({ protocolVersion: '2024-11-05', transport: 'stdio', command: 'npm run mcp', tools: mcpToolList() });
 });
 
 const here = path.dirname(fileURLToPath(import.meta.url));

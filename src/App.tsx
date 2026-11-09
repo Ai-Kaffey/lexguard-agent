@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CitationPanel from './components/CitationPanel';
 import ContractPanel from './components/ContractPanel';
+import PlatformPanel from './components/PlatformPanel';
 import type { ChatMsg, Citation, Health, SSEEvent } from './types';
 
 const SESSION = 'lexguard-demo';
@@ -57,7 +58,7 @@ export default function App() {
   const [health, setHealth] = useState<Health | null>(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<'verify' | 'contract' | 'audit'>('verify');
+  const [tab, setTab] = useState<'verify' | 'contract' | 'audit' | 'platform'>('verify');
   const [reviewer, setReviewer] = useState('张律师');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -248,6 +249,7 @@ export default function App() {
             <button className={tab === 'verify' ? 'on' : ''} onClick={() => setTab('verify')}>引用核验</button>
             <button className={tab === 'contract' ? 'on' : ''} onClick={() => setTab('contract')}>合同审查</button>
             <button className={tab === 'audit' ? 'on' : ''} onClick={() => setTab('audit')}>审计日志</button>
+            <button className={tab === 'platform' ? 'on' : ''} onClick={() => setTab('platform')}>平台能力</button>
           </div>
           <div className="panel">
             {tab === 'verify' && (
@@ -261,6 +263,7 @@ export default function App() {
             )}
             {tab === 'contract' && <ContractPanel />}
             {tab === 'audit' && <AuditView />}
+            {tab === 'platform' && <PlatformPanel />}
           </div>
         </aside>
       </div>
