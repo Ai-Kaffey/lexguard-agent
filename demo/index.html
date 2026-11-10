@@ -23,6 +23,24 @@ a{color:var(--blue);text-decoration:none}
 a:hover{text-decoration:underline}
 code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
 .hidden{display:none !important}
+.flowbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:11.5px}
+.flowbar .req{background:var(--teal-soft);color:var(--teal);border:1px solid var(--teal-line);padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.flowbar .step{background:var(--surface-2);border:1px solid var(--line);padding:3px 8px;border-radius:7px;white-space:nowrap;color:var(--ink-2)}
+.flowbar .step.on{background:var(--blue-deep);color:#fff;border-color:var(--blue-deep)}
+.flowbar .fn{margin-left:auto;color:var(--ink-3);font-family:ui-monospace,Consolas,monospace;font-size:11px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:.18s}
+.gcard:hover{border-color:var(--teal);transform:translateY(-2px)}
+.gcard .no{font-size:11px;color:var(--teal);font-weight:600;letter-spacing:.5px}
+.gcard h3{font-size:14px;margin:6px 0 6px;font-weight:600}
+.gcard .d{font-size:11.5px;color:var(--ink-2);line-height:1.6}
+.gcard .path{font-size:11px;color:var(--ink-3);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;line-height:1.6}
+.gcard .go{display:inline-block;margin-top:10px;font-size:11.5px;color:var(--teal);font-weight:600}
+.navgroup{font-size:10px;color:var(--ink-3);letter-spacing:1px;margin:14px 0 6px;font-weight:600}
+.tblwrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;min-width:620px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+.tbl th{background:var(--surface-2);font-weight:600;color:var(--ink-2)}
+.tbl td b{color:var(--teal)}
 
 .top{display:flex;align-items:center;gap:16px;padding:12px 22px;background:rgba(255,255,255,.95);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;backdrop-filter:blur(10px)}
 .logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;white-space:nowrap}
@@ -143,7 +161,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
 @media(max-width:980px){
   .layout{grid-template-columns:1fr}
   .side{border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;display:flex;gap:6px;overflow-x:auto}
-  .side .lbl,.side .foot{display:none}
+  .side .lbl,.side .foot,.side .navgroup{display:none}
   .navbtn{width:auto;white-space:nowrap;margin:0;padding:7px 11px}
   .navbtn .ic{display:none}
   .rail{border-left:0;border-top:1px solid var(--line)}
@@ -177,22 +195,70 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
 
 <div class="layout">
   <nav class="side">
-    <div class="lbl">能力导航</div>
-    <button class="navbtn on" data-view="workbench"><span class="ic"></span>对话工作台</button>
-    <button class="navbtn" data-view="contract"><span class="ic"></span>合同审查</button>
-    <button class="navbtn" data-view="verify"><span class="ic"></span>引用核验</button>
-    <button class="navbtn" data-view="export"><span class="ic"></span>复核与导出</button>
-    <button class="navbtn" data-view="platform"><span class="ic"></span>平台能力</button>
+    <div class="lbl">按需求找入口</div>
+    <button class="navbtn on" data-view="guide"><span class="ic"></span>使用说明 · 选场景</button>
+    <div class="navgroup">五条工作流</div>
+    <button class="navbtn" data-view="contract"><span class="ic"></span>① 审合同</button>
+    <button class="navbtn" data-view="workbench"><span class="ic"></span>② 问法律问题</button>
+    <button class="navbtn" data-view="verify"><span class="ic"></span>③ 核验引用</button>
+    <button class="navbtn" data-view="export"><span class="ic"></span>④ 合规交付</button>
+    <button class="navbtn" data-view="platform"><span class="ic"></span>⑤ 团队协作</button>
+    <div class="navgroup">其他</div>
     <button class="navbtn" data-view="about"><span class="ic"></span>关于项目</button>
     <div class="foot">
-      技术红线：语义相似 ≠ 法条命中。引用的存在性与时效走结构化查库，模型不参与裁决。<br><br>
-      演示语料不伪造法条全文、真实案号或企业信息。
+      治理层横跨 ①②③④：核验 / 复核 / 审计 / 分级，不是某一个菜单。<br><br>
+      技术红线：语义相似 ≠ 法条命中。演示语料不伪造法条全文、真实案号或企业信息。
     </div>
   </nav>
 
   <main>
+    <!-- 使用说明：按需求选场景 -->
+    <section class="view" id="v-guide">
+      <div class="hero">
+        <h2>先说你要做什么，<span>再告诉你点哪里</span></h2>
+        <p>下面五条是固定的工作流。每条把一个需求、一个菜单入口、一串功能编号绑在一起；选一个进去，页面顶部会一直显示「这是哪个需求、走到第几步、用到了哪些功能」。</p>
+        <div class="kpis">
+          <div class="kpi"><b>5</b><span>条场景工作流</span></div>
+          <div class="kpi"><b>29</b><span>项功能按需求归位</span></div>
+          <div class="kpi"><b>1</b><span>条治理层横跨全流程</span></div>
+        </div>
+      </div>
+      <div class="vhead"><h1>按需求选入口</h1><p>点卡片直接进入，示例数据已预填</p></div>
+      <div class="grid2" id="sceneCards"></div>
+      <div class="card" style="margin-top:14px">
+        <h3>需求 → 入口 → 工作流 对照总表</h3>
+        <p class="desc">这张表就是整个产品的菜单说明书。功能编号与方案文档、README 完全一致。</p>
+        <div class="tblwrap">
+          <table class="tbl">
+            <thead><tr><th>你的需求</th><th>点哪个菜单</th><th>工作流（按顺序）</th><th>功能编号</th><th>最终拿到</th></tr></thead>
+            <tbody>
+              <tr><td><b>① 审合同</b><br>想知道哪里有坑</td><td>审合同</td><td>粘贴 → 规则初筛 → 依据核验 → 风险清单 → 逐条签字 → 导出</td><td>B1 / A1 A2 A3 / A4 / A5 A7 A8</td><td>四件套审查报告</td></tr>
+              <tr><td><b>② 问法律问题</b><br>要带出处的回答</td><td>问法律问题</td><td>提问 → 数据分级 → Agent 检索 → 流式回答 → 引用核验 → 复核</td><td>A6 / C1 C2 C3 / B2 B3 B4 / A1 A2 A4</td><td>带核验状态的回答</td></tr>
+              <tr><td><b>③ 核验引用</b><br>不确定法条真假</td><td>核验引用</td><td>粘贴 → 抽取归一 → 结构化查库 → 六态标注 → 拦截废止与虚构</td><td>A1 A2 A3</td><td>逐条核验结果</td></tr>
+              <tr><td><b>④ 合规交付</b><br>要能签字归档</td><td>合规交付</td><td>生成正文 → 核验 → 逐条签字 → 导出四件套 → 审计留痕 → 下载</td><td>A1–A8 / A5 / F1 F3</td><td>可归档 .md 文档</td></tr>
+              <tr><td><b>⑤ 团队协作</b><br>复用经验 / 接别的工具</td><td>团队协作</td><td>选 Skill → 事实归集 → 权限隔离 → 数据源健康检查 → 用量 → MCP 接入</td><td>C4 C5 / D4 / E1 E2 E3</td><td>清单、隔离视图、MCP 工具</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <div class="mini"><span class="tag">通用规则 1</span><div class="d"><b>语义相似 ≠ 法条命中。</b>存在性与时效结构化查库，模型不裁决。</div></div>
+        <div class="mini"><span class="tag">通用规则 2</span><div class="d"><b>AI 可以提议，不能落定。</b>未逐条签字禁止导出，责任不因使用 AI 减免。</div></div>
+        <div class="mini"><span class="tag">通用规则 3</span><div class="d"><b>演示数据不伪装权威。</b>命中演示语料只返回 demo_only，绝不写成 verified。</div></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>三步上手</h3>
+        <p class="desc">1. 从上面选一个场景 → 2. 按页面顶部步骤条一路点下去 → 3. 想看完整闭环，直接选「② 问法律问题」的第一条快捷问题，一次走完工具调用 → 回答 → 核验 → 签字 → 导出。</p>
+      </div>
+    </section>
+
     <!-- 工作台 -->
-    <section class="view" id="v-workbench">
+    <section class="view hidden" id="v-workbench">
+      <div class="flowbar">
+        <span class="req">需求 ② 问法律问题</span>
+        <span class="step on">1 提问</span><span class="step">2 数据分级</span><span class="step">3 工具检索</span><span class="step">4 流式回答</span><span class="step">5 引用核验</span><span class="step">6 复核签字</span><span class="step">7 导出</span>
+        <span class="fn">A6 · C1-C3 · B2-B4 · A1 A2 · A4</span>
+      </div>
       <div class="hero">
         <h2>不比谁更会答，<span>比谁敢签字</span></h2>
         <p>每条回答都会经过引用核验、人工复核闸门与审计留痕。演示数据全部标注 DEMO，不构成权威核验。</p>
@@ -221,7 +287,12 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
 
     <!-- 合同审查 -->
     <section class="view hidden" id="v-contract">
-      <div class="vhead"><h1>合同审查</h1><p>14 条可解释风险规则，结果可复现、不依赖模型</p></div>
+      <div class="vhead"><h1>① 审合同</h1><p>14 条可解释风险规则，结果可复现、不依赖模型</p></div>
+      <div class="flowbar">
+        <span class="req">需求 ① 审合同</span>
+        <span class="step on">1 粘贴合同</span><span class="step">2 规则初筛</span><span class="step">3 依据核验</span><span class="step">4 风险清单</span><span class="step">5 逐条签字</span><span class="step">6 导出</span>
+        <span class="fn">B1 · A1 A2 A3 · A4 · A5 A7 A8</span>
+      </div>
       <div class="card">
         <h3>粘贴合同文本</h3>
         <p class="desc">规则引擎为主、模型补充为辅；依据法条会自动送引用核验。未命中不代表合同无风险。</p>
@@ -236,7 +307,12 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
 
     <!-- 引用核验 -->
     <section class="view hidden" id="v-verify">
-      <div class="vhead"><h1>引用核验</h1><p>从文本抽取法条与案号，结构化查库，输出六态结果</p></div>
+      <div class="vhead"><h1>③ 核验引用</h1><p>从文本抽取法条与案号，结构化查库，输出六态结果</p></div>
+      <div class="flowbar">
+        <span class="req">需求 ③ 核验引用</span>
+        <span class="step on">1 粘贴文本</span><span class="step">2 抽取归一</span><span class="step">3 结构化查库</span><span class="step">4 六态标注</span><span class="step">5 拦截 / 转人工</span>
+        <span class="fn">A1 · A2 · A3</span>
+      </div>
       <div class="card">
         <h3>待核验文本</h3>
         <p class="desc">试试把示例里的《合同法》第 52 条换成《民法典》第 9999 条，观察状态变化。</p>
@@ -248,7 +324,12 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
 
     <!-- 复核导出 -->
     <section class="view hidden" id="v-export">
-      <div class="vhead"><h1>复核与导出</h1><p>未签字禁止导出；含阻断引用一律拦截</p></div>
+      <div class="vhead"><h1>④ 合规交付</h1><p>未签字禁止导出；含阻断引用一律拦截</p></div>
+      <div class="flowbar">
+        <span class="req">需求 ④ 合规交付</span>
+        <span class="step">1 生成正文</span><span class="step">2 引用核验</span><span class="step on">3 逐条签字</span><span class="step">4 导出四件套</span><span class="step">5 审计留痕</span><span class="step">6 下载 .md</span>
+        <span class="fn">A1-A8 · A5 · F1 F3</span>
+      </div>
       <div class="card">
         <h3>导出四件套</h3>
         <p class="desc">风险报告 / 核验明细 / 复核记录 / 人工智能使用声明。签字进度与右侧栏同步。</p>
@@ -257,6 +338,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn primary" id="exportBtn" disabled>导出四件套</button>
           <button class="btn" id="signAll">演示：一键逐条签字</button>
+          <button class="btn ghost" id="toWorkbench">← 还没有正文？去 ② 生成</button>
         </div>
       </div>
       <div id="bundleView"></div>
@@ -264,7 +346,12 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
 
     <!-- 平台能力 -->
     <section class="view hidden" id="v-platform">
-      <div class="vhead"><h1>平台能力</h1><p>第 3 期：从单人工具到团队系统</p></div>
+      <div class="vhead"><h1>⑤ 团队协作与接入</h1><p>从单人工具到团队系统</p></div>
+      <div class="flowbar">
+        <span class="req">需求 ⑤ 团队协作</span>
+        <span class="step on">1 选 Skill 清单</span><span class="step">2 事实归集</span><span class="step">3 权限隔离</span><span class="step">4 数据源健康检查</span><span class="step">5 用量核算</span><span class="step">6 MCP 接入</span>
+        <span class="fn">C4 C5 · D4 · E1 E2 E3</span>
+      </div>
       <div class="grid3" id="platformCards"></div>
       <div class="card" style="margin-top:14px">
         <h3>伦理墙演示（E1）</h3>
@@ -283,7 +370,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
       <div class="card">
         <h3>定位</h3>
         <p class="desc">合规优先、可自托管、可插拔权威数据源的法律智能体平台。把引用核验、人工复核、数据分级、审计留痕做成 Agent 工作流的强制必经节点，而不是生成后补个脚注。</p>
-        <p class="desc">代码仓库（含完整后端、React 工作台、MCP Server、51+ 单测与 CI）：<a href="https://github.com/Ai-Kaffey/lexguard-agent" target="_blank" rel="noopener">github.com/Ai-Kaffey/lexguard-agent</a></p>
+        <p class="desc">代码仓库（含完整后端、React 工作台、MCP Server、60 个单测与 CI）：<a href="https://github.com/Ai-Kaffey/lexguard-agent" target="_blank" rel="noopener">github.com/Ai-Kaffey/lexguard-agent</a></p>
       </div>
       <div class="grid2">
         <div class="mini"><span class="tag">明确不做</span><div class="d">自建法规全文库、通用问答机器人、C 端法律意见、诉讼结果预测、电子签、声称零幻觉、无标注集就发布准确率。</div></div>
@@ -295,8 +382,8 @@ footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-t
   </main>
 
   <aside class="rail" id="rail">
-    <h3>引用核验与复核</h3>
-    <p class="desc">存在性、条号与时效走结构化查库，模型不裁决。演示语料只返回 demo_only。</p>
+    <h3>治理层 · 所有场景共用</h3>
+    <p class="desc">引用核验（A1–A3）、人工复核（A4）、审计（A5）、数据分级（A6）横跨需求 ①②③④，不是单独菜单。演示语料只返回 demo_only。</p>
     <div class="field"><span>复核人</span><input id="reviewer" value="张律师"></div>
     <div id="railBody"><p class="desc">发起对话后，回答中的法条与案号会自动进入这里。</p></div>
   </aside>
@@ -397,7 +484,7 @@ const ANSWERS={
 };
 function topicOf(q){if(/劳动合同|二倍工资|书面合同|入职|用工/.test(q))return 'labor';if(/违约金|赔偿|损失|调减/.test(q))return 'penalty';if(/合同|条款|协议|审查|风险/.test(q))return 'contract';return 'general'}
 
-const state={view:'workbench',messages:[],citations:[],signed:new Set(),records:[],reviewer:'张律师',answer:'',toolName:'LexGuard / Mock LLM',busy:false,bundle:null};
+const state={view:'guide',messages:[],citations:[],signed:new Set(),records:[],reviewer:'张律师',answer:'',toolName:'LexGuard / Mock LLM',busy:false,bundle:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -515,7 +602,7 @@ $('runContract').addEventListener('click',()=>{
   const text=$('contractText').value,risks=reviewContract(text);
   const cs=verify(risks.flatMap(r=>r.basis).join('；'));
   const hi=risks.filter(r=>r.lv==='high').length,mid=risks.filter(r=>r.lv==='medium').length,low=risks.filter(r=>r.lv==='low').length;
-  let h='<div class="card"><h3>审查结果</h3><div class="okbox">数据分级 '+classify(text)+'｜命中 '+risks.length+' 处风险：高 '+hi+' / 中 '+mid+' / 低 '+low+'；依据引用 '+cs.length+' 条（'+ (cs[0]?STATUS[cs[0].status]:'无') +'）</div><p class="desc">规则结果可复现、可单测；未命中不代表合同无风险，关键条款须人工复核。</p></div>';
+  let h='<div class="card"><h3>审查结果</h3><div class="okbox">数据分级 '+classify(text)+'｜命中 '+risks.length+' 处风险：高 '+hi+' / 中 '+mid+' / 低 '+low+'；依据引用 '+cs.length+' 条（'+ (cs[0]?STATUS[cs[0].status]:'无') +'）</div><p class="desc">规则结果可复现、可单测；未命中不代表合同无风险，关键条款须人工复核。</p><button class="btn" id="toVerify">下一步 → 把依据送去 ③ 核验</button></div>';
   h+=risks.map(r=>'<div class="risk"><div class="q"><span class="lv '+r.lv+'">'+({high:'高',medium:'中',low:'低'}[r.lv])+'</span>'+esc(r.cat)+'｜'+esc(r.quote)+'</div><div class="r">'+esc(r.why)+'</div><div class="r">依据：'+r.basis.map(esc).join('、')+'</div><div class="s">建议：'+esc(r.advice)+'</div></div>').join('');
   $('contractResult').innerHTML=h||'<div class="card"><p class="desc">未命中演示规则库中的风险模式。</p></div>';
 });
@@ -539,6 +626,32 @@ $('platformCards').innerHTML=PLATFORM.map(([t,d,tag])=>'<div class="mini"><span 
 const MATTERS={'张律师':['甲公司并购尽调（演示）','乙公司合同纠纷（演示）'],'李律师':['甲公司并购尽调（演示）'],'赵律师':['甲公司并购尽调（演示）','乙公司合同纠纷（演示）'],'王助理':['乙公司合同纠纷（演示）']};
 $('loadMatters').addEventListener('click',()=>{const u=$('whoSelect').value;const list=MATTERS[u]||[];$('matters').innerHTML='<div class="okbox">'+esc(u)+' 可见 '+list.length+' 个项目</div>'+list.map(m=>'<div class="cit"><div class="raw">'+esc(m)+'</div></div>').join('')});
 
+const SCENES=[
+  {no:'需求 ①',title:'我有一份合同，想知道哪里有坑',d:'适合快速初筛风险条款、拿到依据和修改建议；复杂谈判仍需律师判断。',path:'粘贴合同 → 规则初筛 → 依据法条核验 → 风险清单 → 逐条签字 → 导出',fn:'B1 · A1-A5 · A7 A8',go:'contract',label:'① 审合同'},
+  {no:'需求 ②',title:'我有一个法律问题，要带出处的回答',d:'不允许模型凭记忆编法条；回答里的每条引用都会自动进入核验队列。',path:'提问 → 数据分级 → Agent 检索 → 流式回答 → 引用核验 → 复核 → 导出',fn:'A6 · C1-C3 · B2-B4 · A1 A2 A4',go:'workbench',label:'② 问法律问题'},
+  {no:'需求 ③',title:'我手上有一段文字，不确定法条案号真假',d:'最独立的场景：不用生成回答，只做引用体检；示例故意混了废止、虚构、演示与残缺引用。',path:'粘贴文本 → 抽取归一 → 结构化查库 → 六态标注 → 拦截 / 转人工',fn:'A1 · A2 · A3',go:'verify',label:'③ 核验引用'},
+  {no:'需求 ④',title:'我要出一份能对外交付的文书',d:'必须逐条签字、留痕、带《AI 使用声明》；未签字或含阻断引用一律禁止导出。',path:'生成正文 → 核验 → 逐条签字 → 导出四件套 → 审计留痕 → 下载 .md',fn:'A1-A8 · A5 · F1 F3',go:'export',label:'④ 合规交付'},
+  {no:'需求 ⑤',title:'团队要复用经验，或把能力接进别的工具',d:'版本化清单、事实矛盾挂起、伦理墙、数据源降级、用量核算、MCP 接入。',path:'选 Skill → 事实归集 → 权限隔离 → 健康检查 → 用量 → MCP 接入',fn:'C4 C5 · D4 · E1 E2 E3',go:'platform',label:'⑤ 团队协作与接入'}
+];
+$('sceneCards').innerHTML=SCENES.map(s=>'<div class="gcard" data-go="'+s.go+'" data-label="'+s.label+'"><div class="no">'+s.no+'</div><h3>'+s.title+'</h3><div class="d">'+s.d+'</div><div class="path"><b>工作流：</b>'+s.path+'<br><b>涉及功能：</b>'+s.fn+'</div><span class="go">进入该工作流 →</span></div>').join('');
+$('sceneCards').querySelectorAll('[data-go]').forEach(c=>c.addEventListener('click',()=>{
+  const v=c.dataset.go;
+  switchView(v);
+  if(v==='contract')$('contractText').value=SAMPLE;
+  if(v==='workbench')toast('选一条快捷问题，即可走完整链路');
+  if(v==='export'&&!state.answer)toast('还没有正文：先在 ② 生成一次回答，或点页面里的「去生成」');
+  if(v==='verify')toast('示例文本已预填，点「逐条核验」看六态结果');
+  toast('进入 '+c.dataset.label);
+}));
+$('toWorkbench').addEventListener('click',()=>{switchView('workbench');toast('先在 ② 生成一次回答，再回到 ④ 导出')});
+$('contractResult').addEventListener('click',e=>{
+  if(!e.target.closest('#toVerify'))return;
+  const basis=[...new Set(reviewContract($('contractText').value).flatMap(r=>r.basis))].join('；');
+  $('verifyText').value=basis||'（未检出依据）';
+  switchView('verify');
+  $('runVerify').click();
+  toast('已把依据法条送去 ③ 核验');
+});
 renderChat();renderRail();renderExport();
 </script>
 </body>
