@@ -3,6 +3,7 @@ import express, { type Request, type Response } from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AuditLog } from './core/audit';
+import { Persistence, type PersistedReview, type PersistedSession } from './core/persistence';
 import { verifyText } from './core/citations';
 import { countByLevel, reviewContract, RISK_RULES } from './core/contract';
 import {
@@ -16,8 +17,8 @@ import { classifyData } from './core/routing';
 import { FactStore } from './core/facts';
 import { SkillRegistry } from './core/skills';
 import { demoTenancy } from './core/tenancy';
-import { UsageMeter } from './core/usage';
-import type { Citation, ContractRisk } from './core/schema';
+import { UsageMeter, type UsageRecord } from './core/usage';
+import type { AuditEvent, Citation, ContractRisk } from './core/schema';
 import { FIXTURE_STATS, createManagedDataSource } from './providers/datasource';
 import { createLLMProvider, type ChatMessage } from './providers/llm';
 import { mcpToolList } from './mcp/handler';
@@ -42,11 +43,17 @@ const ds = createManagedDataSource({
   token: process.env.LAW_DATASOURCE_TOKEN,
 });
 
-const audit = new AuditLog();
+// 关键状态落盘为 append-only JSONL，服务重启后可回放
+const persistence = new Persistence(
+  process.env.LEXGUARD_DATA_DIR ?? path.resolve(process.cwd(), 'data'),
+);
+const audit = new AuditLog((e) => persistence.audit.append(e));
+audit.restore(persistence.audit.readAll<AuditEvent>());
 const skills = new SkillRegistry();
 const facts = new FactStore();
 const tenancy = demoTenancy();
-const usage = new UsageMeter();
+const usage = new UsageMeter((r) => persistence.usage.append(r));
+usage.restore(persistence.usage.readAll<UsageRecord>());
 
 // 演示事实：故意放入一条冲突取值，用来展示「矛盾显式暴露、不自动合并」的能力
 facts.add({ subject: '甲公司', predicate: '注册资本', value: '1000万元', source: 'DEMO-工商摘录', demo: true, verified: false });
@@ -66,6 +73,34 @@ function gateFor(sessionId: string): ReviewGate {
     gates.set(sessionId, g);
   }
   return g;
+}
+
+// 启动时回放签字记录与会话结果（按 sessionId 取最后一条）
+const reviewGroups = new Map<string, PersistedReview[]>();
+for (const r of persistence.reviews.readAll<PersistedReview>()) {
+  if (r.key === '__reset__') {
+    reviewGroups.set(r.sessionId, []);
+    continue;
+  }
+  const arr = reviewGroups.get(r.sessionId) ?? [];
+  arr.push(r);
+  reviewGroups.set(r.sessionId, arr);
+}
+for (const [sid, rows] of reviewGroups) {
+  gateFor(sid).restore(rows.map((r) => ({
+    citationRaw: r.key,
+    reviewer: r.reviewer,
+    decision: r.decision as 'approved' | 'rejected' | 'edited',
+    at: r.at,
+    ...(r.note ? { note: r.note } : {}),
+  })));
+}
+for (const row of persistence.sessions.readAll<PersistedSession>()) {
+  results.set(row.sessionId, {
+    content: row.content,
+    citations: row.citations as Citation[],
+    risks: [],
+  });
 }
 
 app.get('/api/health', (_req: Request, res: Response) => {
@@ -91,6 +126,12 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'message 不能为空' });
     return;
   }
+  if (message.length > 8000) {
+    res.status(400).json({ error: 'message 过长（上限 8000 字符）' });
+    return;
+  }
+  // sessionId 只接受安全字符，避免路径穿越或被猜测的会话键
+  const sid = /^[A-Za-z0-9_-]{1,64}$/.test(sessionId) ? sessionId : 'default';
 
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -100,16 +141,24 @@ app.post('/api/chat', async (req: Request, res: Response) => {
   const send = (event: unknown) => {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   };
-  const ctx = { llm, toolCtx: { ds }, audit, usage, who, sessionId };
-  // 新一轮对话重置复核闸门，避免沿用上一轮的签字记录
-  gates.set(sessionId, new ReviewGate());
-  const gate = gates.get(sessionId)!;
+  const ctx = { llm, toolCtx: { ds }, audit, usage, who, sessionId: sid };
+  // 新一轮对话重置复核闸门，避免沿用上一轮的签字记录；重置标记同步落盘
+  gates.set(sid, new ReviewGate());
+  persistence.reviews.append({
+    sessionId: sid, key: '__reset__', reviewer: 'system', decision: 'approved',
+    at: new Date().toISOString(),
+  });
+  const gate = gates.get(sid)!;
 
   try {
     for await (const ev of runAgent(message, history, ctx)) {
       send(ev);
       if (ev.type === 'done') {
-        results.set(sessionId, { content: ev.content, citations: ev.citations, risks: [] });
+        results.set(sid, { content: ev.content, citations: ev.citations, risks: [] });
+        persistence.sessions.append({
+          sessionId: sid, content: ev.content, citations: ev.citations,
+          at: new Date().toISOString(),
+        });
         gate.markVerification();
       }
     }
@@ -165,8 +214,13 @@ app.post('/api/review', (req: Request, res: Response) => {
     res.status(400).json({ error: 'key 与 reviewer 必填' });
     return;
   }
-  const gate = gateFor(sessionId);
+  const sid = /^[A-Za-z0-9_-]{1,64}$/.test(sessionId) ? sessionId : 'default';
+  const gate = gateFor(sid);
   const record = gate.approve(key, reviewer, decision, note);
+  persistence.reviews.append({
+    sessionId: sid, key, reviewer, decision, at: record.at,
+    ...(note ? { note } : {}),
+  });
   audit.record({
     who: reviewer, action: 'review_sign', dataClass: 'B',
     citation: key, reviewer, detail: decision,
@@ -227,6 +281,11 @@ app.get('/api/export/:sessionId', (req: Request, res: Response) => {
 
 app.get('/api/audit', (_req: Request, res: Response) => {
   res.json({ count: audit.size(), events: audit.all(), report: audit.toReport() });
+});
+
+/** 落盘状态：兑现「审计日志留存」承诺，可核对是否真的写到了磁盘 */
+app.get('/api/persistence', (_req: Request, res: Response) => {
+  res.json(persistence.stats());
 });
 
 /* ---------------- 第 3 期：平台化能力 API ---------------- */

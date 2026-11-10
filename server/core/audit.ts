@@ -8,9 +8,17 @@ import type { AuditEvent } from './schema';
 export class AuditLog {
   private events: AuditEvent[] = [];
 
+  constructor(private readonly onRecord?: (event: AuditEvent) => void) {}
+
+  /** 启动时从 JSONL 回放；回放不触发 onRecord，避免重复写盘 */
+  restore(events: AuditEvent[]): void {
+    this.events = [...events];
+  }
+
   record(event: Omit<AuditEvent, 'ts'>): AuditEvent {
     const full: AuditEvent = { ...event, ts: new Date().toISOString() };
     this.events.push(full);
+    this.onRecord?.(full);
     return full;
   }
 

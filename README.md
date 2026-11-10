@@ -51,6 +51,11 @@ npm start           # 仅启动后端（生产模式，托管 dist/）
 npm run mcp         # 启动 MCP Server（stdio，供 Claude / WorkBuddy 等宿主接入）
 ```
 
+**在线交互演示**（纯前端、无需安装，打开即可体验完整闭环）：
+https://lexguard-legal-agent.app.workbuddy.host/?sharecode=EEJ2ROANDY
+
+演示页在浏览器本地模拟「工具调用 → 流式回答 → 引用核验 → 逐条签字 → 导出四件套」，不调用真实模型、不连接权威库；真实运行请按上面的命令启动本仓库。**演示页源码：`demo/index.html`**（单文件、零依赖，可直接双击打开）。
+
 ### 接真实模型
 
 ```bash
@@ -187,7 +192,7 @@ flowchart TB
 | 第 3 期 · 平台化（6 项） | ✅ | C4 Skill 中心、C5 事实层、D4 MCP Server、E1 多租户、E2 数据源管理、E3 用量成本 |
 | 第 4 期 · 开源发布（F4） | ✅ | README、LICENSE、CI、合规映射表、公开仓库 |
 
-**验证**：51 个单测 / 8 个测试文件、typecheck、build、端到端（未签字 403 → 签字 200 四件套）、MCP stdio 实跑、GitHub Actions CI 全绿。
+**验证**：60 个单测 / 9 个测试文件、typecheck、build、端到端（未签字 403 → 签字 200 四件套、JSONL 落盘与重启回放）、MCP stdio 实跑、GitHub Actions CI 全绿。
 
 ### 第 3 期能力说明
 
@@ -217,8 +222,25 @@ flowchart TB
 | POST | `/api/datasources/health` | 数据源健康检查与降级 |
 | GET | `/api/tenants/:id/matters?userId=` | 按伦理墙过滤后的可见项目 |
 | GET | `/api/mcp/tools` | MCP 工具清单与接入方式 |
+| GET | `/api/persistence` | 四张 JSONL 落盘统计，核对留存是否真的写到磁盘 |
 
 ---
+
+## v0.2 优化记录（2026-11-10）
+
+29 项功能保持不变，这一轮修的是「宣称了但没真正做」和边界情况：
+
+| 发现的问题 | 优化 |
+|---|---|
+| 承诺「审计日志留存不少于 3 年」，但 audit / 签字 / 会话结果全在内存，重启即丢 | 新增 `core/persistence.ts`：audit / usage / reviews / sessions 四张 append-only JSONL 落盘，启动时回放；`GET /api/persistence` 可核对；`data/` 已被 gitignore 排除 |
+| 工具结果里出现的法条引用绕过核验 | Agent loop 收集 `tool_result.citations`，与最终回答引用合并去重后一起进入复核队列 |
+| 真实模型在工具轮输出的过程文本会混进最终答案 | 前端把工具轮 delta 归档为可折叠的「过程文本」，不计入最终回答 |
+| 《AI 使用声明》收了 `records` 却没写进声明 | 声明新增「人工复核签字明细」段落，逐条列出复核人、决定与时间 |
+| Mock LLM 任何问题都给同一段回答，演示容易穿帮 | 按问题主题给 4 套不同回答，引用均来自演示语料中确实存在的条目 |
+| 敏感信息藏在 history 里、超长输入、可猜测的会话键 | history 一并参与数据分级；message 上限 8000 字符；sessionId 白名单校验 |
+| 四件套只能在页面上看 | 前端新增「下载 .md」，一次导出四份合并文档 |
+
+新增 9 个测试（`tests/optimizations.test.ts`），合计 60 个。
 
 ## 明确不做
 
@@ -241,7 +263,7 @@ legal-agent/
 │   ├── eval/          dataset（评测集与指标）
 │   └── index.ts       Express + SSE + REST
 ├── src/               React 工作台（引用核验 / 合同审查 / 审计 / 平台能力）
-├── tests/             Vitest 单测（8 个文件 / 51 个用例）
+├── tests/             Vitest 单测（9 个文件 / 60 个用例）
 ├── ROADMAP.md         分期规划
 └── README.md
 ```

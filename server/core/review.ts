@@ -61,6 +61,13 @@ export class ReviewGate {
     return [...this.records.values()];
   }
 
+  /** 启动时从 JSONL 回放签字记录 */
+  restore(records: ReviewRecord[]): void {
+    this.records.clear();
+    for (const r of records) this.records.set(r.citationRaw, r);
+    if (records.length) this.state = 'pending_review';
+  }
+
   /** 逐条确认 + 文档整体确认，二者缺一不可 */
   isFullyApproved(citations: Citation[]): boolean {
     if (!this.records.has(DOCUMENT_KEY)) return false;
@@ -103,6 +110,9 @@ export function buildAiUsageDeclaration(input: DeclarationInput): Declaration {
     reviewedBy: input.reviewedBy,
     generatedAt: new Date().toISOString(),
     items: input.citations.map((c) => ({ citation: c.raw, status: c.status })),
+    reviewRecords: input.records.map((r) => ({
+      key: r.citationRaw, decision: r.decision, reviewer: r.reviewer, at: r.at,
+    })),
     statement:
       '本人承诺：已对本文书所涉事实、证据、法条与参考案例逐项核验；' +
       '已采取合理措施识别并防范生成式人工智能产生的失实内容；' +
@@ -123,6 +133,11 @@ export function renderDeclaration(d: Declaration): string {
     ...(d.items.length
       ? d.items.map((i, n) => `${n + 1}. ${i.citation} —— ${i.status}`)
       : ['（本回答未引用法条或案例）']),
+    '',
+    '## 人工复核签字明细',
+    ...(d.reviewRecords.length
+      ? d.reviewRecords.map((r) => `- ${r.key}｜${r.decision}｜复核人：${r.reviewer}｜时间：${r.at}`)
+      : ['（无复核记录）']),
     '',
     d.statement,
     '',

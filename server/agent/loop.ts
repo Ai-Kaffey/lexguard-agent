@@ -1,11 +1,11 @@
-import { hasBlockingCitation, verifyText } from '../core/citations';
+import { hasBlockingCitation, mergeCitations, verifyText } from '../core/citations';
 import { assertOutboundAllowed, classifyData } from '../core/routing';
 import type { AuditLog } from '../core/audit';
 import type { UsageMeter } from '../core/usage';
 import type { Citation, ContractRisk, DataClass } from '../core/schema';
 import type { ChatMessage, LLMProvider, ToolCall } from '../providers/llm';
 import { buildSystemPrompt } from './prompts';
-import { dispatchTool, TOOL_DEFINITIONS, type ToolContext } from './tools';
+import { dispatchTool, TOOL_DEFINITIONS, type ToolContext, type ToolResult } from './tools';
 
 export const MAX_TURNS = 5;
 
@@ -45,7 +45,8 @@ export async function* runAgent(
   history: ChatMessage[],
   ctx: AgentContext,
 ): AsyncGenerator<AgentEvent, void, unknown> {
-  const dataClass = classifyData(message);
+  // 历史消息同样参与数据分级，避免敏感材料藏在 history 里被发到外部模型
+  const dataClass = classifyData([message, ...history.map((h) => h.content)].join('\n'));
   try {
     assertOutboundAllowed(dataClass, ctx.llm.isLocal ? 'local' : 'cloud');
   } catch (e) {
@@ -73,6 +74,8 @@ export async function* runAgent(
     { role: 'user', content: message },
   ];
 
+  const toolCitations: Citation[] = [];
+
   for (let turn = 0; turn < MAX_TURNS; turn += 1) {
     let draft = '';
     let content = '';
@@ -99,12 +102,14 @@ export async function* runAgent(
       for (const call of toolCalls) {
         ctx.usage?.recordTool(ctx.sessionId, ctx.who, call.name);
         yield { type: 'tool_call', id: call.id, name: call.name, args: call.arguments };
-        let out;
+        let out: ToolResult;
         try {
           out = await dispatchTool(call.name, call.arguments, ctx.toolCtx);
         } catch (e) {
           out = { result: `工具执行失败：${err(e)}` };
         }
+        // 工具结果里出现的引用同样进入核验队列，不允许绕过治理层
+        if (out.citations) toolCitations.push(...out.citations);
         yield { type: 'tool_result', id: call.id, name: call.name, ...out };
         ctx.audit.record({
           who: ctx.who,
@@ -119,7 +124,7 @@ export async function* runAgent(
       continue;
     }
 
-    const citations = await verifyText(content, ctx.toolCtx.ds);
+    const citations = mergeCitations(toolCitations, await verifyText(content, ctx.toolCtx.ds));
     yield { type: 'verification', citations };
 
     for (const c of citations) {

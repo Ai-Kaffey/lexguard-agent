@@ -61,6 +61,8 @@ export interface ChatMsg {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** 工具轮产生的过程文本，不能混进最终回答 */
+  process?: string;
   tools: ToolView[];
 }
 

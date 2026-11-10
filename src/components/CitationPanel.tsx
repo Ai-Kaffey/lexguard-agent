@@ -69,6 +69,16 @@ export default function CitationPanel({ citations, sessionId, reviewer, onReview
     }
   }
 
+  function downloadBundle(b: ExportBundle) {
+    const text = [b.riskReport, b.verificationDetail, b.reviewLog, b.declaration].join('\n\n---\n\n');
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'LexGuard-四件套.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div>
       <h3>引用核验与人工复核</h3>
@@ -129,7 +139,10 @@ export default function CitationPanel({ citations, sessionId, reviewer, onReview
 
       {bundle && (
         <div style={{ marginTop: 14 }}>
-          <h3>导出结果（四件套）</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h3 style={{ margin: 0 }}>导出结果（四件套）</h3>
+            <button className="btn" onClick={() => downloadBundle(bundle)}>下载 .md</button>
+          </div>
           {([
             ['风险报告 / 回答正文', bundle.riskReport],
             ['法条案例核验明细', bundle.verificationDetail],

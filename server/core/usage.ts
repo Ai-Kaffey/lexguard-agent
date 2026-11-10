@@ -25,16 +25,27 @@ export interface UsageSummary {
 export class UsageMeter {
   private records: UsageRecord[] = [];
 
+  constructor(private readonly onRecord?: (record: UsageRecord) => void) {}
+
+  /** 启动时从 JSONL 回放；回放不触发 onRecord */
+  restore(records: UsageRecord[]): void {
+    this.records = [...records];
+  }
+
   recordLLM(sessionId: string, who: string, chars: number): number {
     const tokensEstimate = Math.ceil(Math.max(0, chars) / 4);
-    this.records.push({ ts: new Date().toISOString(), sessionId, who, kind: 'llm', tokensEstimate });
+    const record: UsageRecord = { ts: new Date().toISOString(), sessionId, who, kind: 'llm', tokensEstimate };
+    this.records.push(record);
+    this.onRecord?.(record);
     return tokensEstimate;
   }
 
   recordTool(sessionId: string, who: string, toolName: string): void {
-    this.records.push({
+    const record: UsageRecord = {
       ts: new Date().toISOString(), sessionId, who, kind: 'tool', tokensEstimate: 0, toolName,
-    });
+    };
+    this.records.push(record);
+    this.onRecord?.(record);
   }
 
   all(): ReadonlyArray<UsageRecord> {

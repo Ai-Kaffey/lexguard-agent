@@ -89,7 +89,13 @@ export default function App() {
         patchLast((m) => ({ ...m, content: m.content + ev.text }));
         break;
       case 'tool_call':
-        patchLast((m) => ({ ...m, tools: [...m.tools, { id: ev.id, name: ev.name, args: ev.args }] }));
+        // 真实模型在工具轮可能先输出一段思考文本；把它归档为过程文本，避免混进最终答案
+        patchLast((m) => ({
+          ...m,
+          process: m.content ? [m.process, m.content].filter(Boolean).join('\n') : m.process,
+          content: '',
+          tools: [...m.tools, { id: ev.id, name: ev.name, args: ev.args }],
+        }));
         break;
       case 'tool_result':
         patchLast((m) => ({
@@ -211,6 +217,12 @@ export default function App() {
               <div className={`msg ${m.role}`} key={m.id}>
                 <div className="role">{m.role === 'user' ? '你' : 'LexGuard'}</div>
                 <div className="bubble">{m.content || (busy ? '思考中…' : '')}</div>
+                {m.process && (
+                  <details className="tool">
+                    <summary>工具轮过程文本（不计入最终回答）</summary>
+                    <div className="res">{m.process}</div>
+                  </details>
+                )}
                 {m.tools.map((t) => (
                   <div className="tool" key={t.id}>
                     <div className="th">工具调用 · {t.name}</div>

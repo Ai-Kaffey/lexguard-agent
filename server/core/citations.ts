@@ -171,6 +171,21 @@ export async function verifyText(text: string, ds: LawDataSource): Promise<Citat
   return verifyCitations(extractCitations(text), ds);
 }
 
+/** 合并多来源引用并按原文去重，保持发现顺序 */
+export function mergeCitations(...groups: Citation[][]): Citation[] {
+  const seen = new Set<string>();
+  const out: Citation[] = [];
+  for (const group of groups) {
+    for (const c of group) {
+      if (!seen.has(c.raw)) {
+        seen.add(c.raw);
+        out.push(c);
+      }
+    }
+  }
+  return out;
+}
+
 export function summarizeVerification(cs: Citation[]): Record<CitationStatus, number> {
   const out: Record<CitationStatus, number> = {
     verified: 0,

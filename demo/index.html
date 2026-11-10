@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="LexGuard 可信法律智能体平台 · 交互演示">
+<title>LexGuard · 可信法律智能体平台</title>
+<style>
+:root{
+  --bg:#F4F7FB;--surface:#FFFFFF;--surface-2:#F8FAFD;--line:#E2E9F1;--line-2:#CFDBE8;
+  --ink:#16233A;--ink-2:#46586F;--ink-3:#7C8CA0;
+  --blue:#185FA5;--blue-deep:#0C447C;--blue-soft:#E6F1FB;
+  --teal:#0F6E56;--teal-soft:#E1F5EE;--teal-line:#C6E9DA;
+  --amber:#BA7517;--amber-soft:#FAEEDA;--red:#A32D2D;--red-soft:#FCEBEB;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.7 "PingFang SC","Microsoft YaHei","Hiragino Sans GB",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,textarea,input,select{font-family:inherit;font-size:inherit}
+button{cursor:pointer}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.hidden{display:none !important}
+
+.top{display:flex;align-items:center;gap:16px;padding:12px 22px;background:rgba(255,255,255,.95);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;backdrop-filter:blur(10px)}
+.logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;white-space:nowrap}
+.logo .mk{width:22px;height:22px;border:2px solid var(--teal);border-radius:7px;position:relative;flex:none}
+.logo .mk::after{content:"";position:absolute;left:5px;top:5px;width:8px;height:8px;background:var(--teal);border-radius:2px}
+.logo small{font-weight:400;color:var(--ink-3);font-size:11px}
+.badge-demo{font-size:11px;color:var(--amber);background:var(--amber-soft);border:1px solid #F0DCB6;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.topstats{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.tstat{font-size:11px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);padding:4px 10px;border-radius:8px;white-space:nowrap}
+.tstat b{color:var(--teal);font-weight:600}
+.notice{background:var(--amber-soft);border-bottom:1px solid #F0DCB6;color:#7A5410;font-size:11.5px;text-align:center;padding:6px 16px}
+
+.layout{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr) 330px;gap:0;min-height:calc(100vh - 100px)}
+.side{border-right:1px solid var(--line);padding:18px 12px;background:var(--surface)}
+.side .lbl{font-size:10px;letter-spacing:1.4px;color:var(--ink-3);margin:2px 0 10px;font-weight:600}
+.navbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:10px;padding:9px 11px;color:var(--ink-2);font-size:13px;margin-bottom:4px;transition:.16s}
+.navbtn:hover{background:var(--surface-2)}
+.navbtn.on{background:var(--teal-soft);color:var(--teal);border-color:var(--teal-line);font-weight:600}
+.navbtn .ic{width:14px;height:14px;border:2px solid currentColor;border-radius:4px;flex:none;opacity:.75}
+.navbtn.on .ic{background:currentColor}
+.side .foot{margin-top:22px;padding-top:14px;border-top:1px dashed var(--line);font-size:11px;color:var(--ink-3);line-height:1.7}
+
+.main{padding:20px 22px;min-width:0}
+.rail{border-left:1px solid var(--line);background:var(--surface);padding:18px 16px;min-width:0}
+.view{animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.vhead{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.vhead h1{font-size:20px;margin:0;font-weight:600;letter-spacing:-.3px}
+.vhead p{margin:0 0 2px;color:var(--ink-3);font-size:12px}
+.sub{display:inline-flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+
+.hero{background:linear-gradient(135deg,#FFFFFF 0%,#EDF5FB 100%);border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border:1px solid #DCEBF6;border-radius:50%;opacity:.7}
+.hero h2{font-size:21px;margin:0 0 8px;font-weight:600;position:relative}
+.hero h2 span{color:var(--teal)}
+.hero p{margin:0;color:var(--ink-2);font-size:13px;max-width:640px;position:relative}
+.hero .kpis{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;position:relative}
+.kpi{min-width:110px}
+.kpi b{display:block;font-size:20px;color:var(--teal);line-height:1.2}
+.kpi span{font-size:11px;color:var(--ink-3)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h3{font-size:14px;margin:0 0 10px;font-weight:600}
+.card .desc{font-size:12px;color:var(--ink-3);margin:0 0 12px;line-height:1.65}
+.pill{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-2);background:var(--surface-2)}
+.pill.ok{background:var(--teal-soft);color:var(--teal);border-color:var(--teal-line)}
+.pill.warn{background:var(--amber-soft);color:var(--amber);border-color:#F0DCB6}
+
+.chat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-height:380px;max-height:56vh;overflow:hidden}
+.chatbody{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.empty{margin:auto;text-align:center;color:var(--ink-3);font-size:13px;max-width:380px}
+.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:6px}
+.m{max-width:100%}
+.m .who{font-size:11px;color:var(--ink-3);margin-bottom:4px}
+.bub{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;white-space:pre-wrap;word-break:break-word;font-size:13px}
+.m.me{align-self:flex-end;max-width:82%}
+.m.me .bub{background:var(--blue-deep);color:#fff;border-color:var(--blue-deep)}
+.toolcard{background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--blue);border-radius:9px;margin-top:8px;font-size:12px;overflow:hidden}
+.toolcard summary{padding:8px 11px;cursor:pointer;color:var(--blue-deep);font-weight:600}
+.toolcard .tres{padding:9px 11px;border-top:1px dashed var(--line);color:var(--ink-2);white-space:pre-wrap;max-height:180px;overflow-y:auto;font-size:11.5px}
+.composer{border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;align-items:flex-end;background:var(--surface)}
+.composer textarea{flex:1;resize:none;height:60px;border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;outline:none;background:var(--surface-2);color:var(--ink)}
+.composer textarea:focus{border-color:var(--teal)}
+.btn{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);border-radius:9px;padding:8px 13px;font-size:12.5px;transition:.16s}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn.primary{background:var(--teal);color:#fff;border-color:var(--teal);font-weight:600}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent}
+.btn.done{background:var(--teal-soft);color:var(--teal);border-color:var(--teal-line)}
+.quick{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.quick button{font-size:11.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.quick button:hover{border-color:var(--teal);color:var(--teal)}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.mini .t{font-size:12.5px;font-weight:600;margin-bottom:6px}
+.mini .d{font-size:11.5px;color:var(--ink-3);line-height:1.6}
+.mini .tag{font-size:10px;color:var(--teal);background:var(--teal-soft);padding:2px 7px;border-radius:5px;display:inline-block;margin-bottom:8px}
+
+.rail h3{font-size:13px;margin:0 0 4px;font-weight:600}
+.rail .desc{font-size:11px;color:var(--ink-3);margin:0 0 12px;line-height:1.6}
+.field{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--ink-2)}
+.field input,.field select{flex:1;min-width:0;border:1px solid var(--line-2);border-radius:7px;padding:6px 9px;background:var(--surface-2);color:var(--ink);outline:none}
+.cit{border:1px solid var(--line);border-radius:10px;padding:10px 11px;margin-bottom:9px;background:var(--surface-2)}
+.cit .raw{font-size:12px;font-weight:600;word-break:break-all;line-height:1.5}
+.cit .why{font-size:11px;color:var(--ink-2);margin:5px 0 8px;line-height:1.55}
+.st{font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;margin-left:5px;white-space:nowrap}
+.st.verified{background:var(--teal-soft);color:var(--teal)}
+.st.demo_only,.st.needs_human{background:var(--amber-soft);color:var(--amber)}
+.st.repealed,.st.not_in_corpus,.st.malformed{background:var(--red-soft);color:var(--red)}
+.okbox{font-size:11.5px;color:var(--teal);background:var(--teal-soft);padding:8px 10px;border-radius:8px;margin:8px 0}
+.errbox{font-size:11.5px;color:var(--red);background:var(--red-soft);padding:8px 10px;border-radius:8px;margin:8px 0}
+.progress{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin:8px 0 12px;border:1px solid var(--line)}
+.progress i{display:block;height:100%;background:var(--teal);width:0;transition:width .3s}
+
+.risk{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;background:var(--surface-2)}
+.risk .q{font-size:12px;font-weight:600;word-break:break-all}
+.risk .r{font-size:11.5px;color:var(--ink-2);margin-top:5px}
+.risk .s{font-size:11.5px;color:var(--teal);margin-top:5px}
+.lv{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;margin-right:6px}
+.lv.high{background:var(--red-soft);color:var(--red)}
+.lv.medium{background:var(--amber-soft);color:var(--amber)}
+.lv.low{background:#F1EFE8;color:#5F5E5A}
+textarea.big{width:100%;height:150px;border:1px solid var(--line-2);border-radius:9px;padding:10px;background:var(--surface-2);color:var(--ink);outline:none;resize:vertical}
+
+.modal{position:fixed;inset:0;background:rgba(16,30,50,.45);display:flex;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal .box{background:var(--surface);border-radius:16px;width:min(760px,100%);max-height:84vh;display:flex;flex-direction:column;overflow:hidden}
+.modal .mh{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.modal .mh b{font-size:14px}
+.modal .mb{padding:16px 18px;overflow-y:auto;font-size:12px;white-space:pre-wrap;line-height:1.75;color:var(--ink-2)}
+.modal .mf{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--blue-deep);color:#fff;font-size:12.5px;padding:9px 16px;border-radius:999px;z-index:60;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.on{opacity:1}
+footer{text-align:center;font-size:11px;color:var(--ink-3);padding:18px;border-top:1px solid var(--line);line-height:1.8}
+
+@media(max-width:1200px){.layout{grid-template-columns:170px minmax(0,1fr) 290px}}
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .side{border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;display:flex;gap:6px;overflow-x:auto}
+  .side .lbl,.side .foot{display:none}
+  .navbtn{width:auto;white-space:nowrap;margin:0;padding:7px 11px}
+  .navbtn .ic{display:none}
+  .rail{border-left:0;border-top:1px solid var(--line)}
+  .main{padding:16px}
+  .chat{max-height:none;min-height:320px}
+}
+@media(max-width:600px){
+  .top{padding:10px 14px;gap:8px}
+  .logo small,.topstats .tstat:nth-child(n+3){display:none}
+  .hero{padding:18px}
+  .hero h2{font-size:18px}
+  .composer{flex-direction:column;align-items:stretch}
+  .composer button{width:100%}
+  .vhead h1{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="logo"><span class="mk"></span>LexGuard <small>可信法律智能体平台</small></div>
+  <span class="badge-demo">交互演示 · 浏览器本地模拟</span>
+  <div class="topstats">
+    <span class="tstat">核验引擎 <b>六态</b></span>
+    <span class="tstat">审查规则 <b>14 条</b></span>
+    <span class="tstat">数据源 <b>DEMO</b></span>
+    <span class="tstat">功能 <b>29 项</b></span>
+  </div>
+</header>
+<div class="notice">AI 辅助生成，仅供参考，不构成法律意见。本页为纯前端交互演示，不调用真实模型、不连接权威法律数据库；所有语料均为显式标注的模拟数据。</div>
+
+<div class="layout">
+  <nav class="side">
+    <div class="lbl">能力导航</div>
+    <button class="navbtn on" data-view="workbench"><span class="ic"></span>对话工作台</button>
+    <button class="navbtn" data-view="contract"><span class="ic"></span>合同审查</button>
+    <button class="navbtn" data-view="verify"><span class="ic"></span>引用核验</button>
+    <button class="navbtn" data-view="export"><span class="ic"></span>复核与导出</button>
+    <button class="navbtn" data-view="platform"><span class="ic"></span>平台能力</button>
+    <button class="navbtn" data-view="about"><span class="ic"></span>关于项目</button>
+    <div class="foot">
+      技术红线：语义相似 ≠ 法条命中。引用的存在性与时效走结构化查库，模型不参与裁决。<br><br>
+      演示语料不伪造法条全文、真实案号或企业信息。
+    </div>
+  </nav>
+
+  <main>
+    <!-- 工作台 -->
+    <section class="view" id="v-workbench">
+      <div class="hero">
+        <h2>不比谁更会答，<span>比谁敢签字</span></h2>
+        <p>每条回答都会经过引用核验、人工复核闸门与审计留痕。演示数据全部标注 DEMO，不构成权威核验。</p>
+        <div class="kpis">
+          <div class="kpi"><b>45%</b><span>法律人苦于核验耗时</span></div>
+          <div class="kpi"><b>77%</b><span>更想要引导式工作流</span></div>
+          <div class="kpi"><b>11%</b><span>达到全工作流成熟度</span></div>
+        </div>
+      </div>
+      <div class="chat">
+        <div class="chatbody" id="chat">
+          <div class="empty"><b>从下面的问题开始</b>或直接输入合同片段。演示会走完「工具调用 → 流式回答 → 引用核验 → 逐条签字 → 导出四件套」。</div>
+        </div>
+        <div class="composer">
+          <textarea id="input" placeholder="输入法律问题，或粘贴合同片段…（Ctrl / ⌘ + Enter 发送）"></textarea>
+          <button class="btn primary" id="send">发送</button>
+        </div>
+      </div>
+      <div class="quick" id="quick"></div>
+      <div class="sub">
+        <span class="pill ok" id="dcChip">数据分级 C · 本地演示</span>
+        <span class="pill" id="stageChip">状态：待提问</span>
+        <button class="btn ghost" id="reset" style="padding:4px 10px;font-size:11px">重置演示</button>
+      </div>
+    </section>
+
+    <!-- 合同审查 -->
+    <section class="view hidden" id="v-contract">
+      <div class="vhead"><h1>合同审查</h1><p>14 条可解释风险规则，结果可复现、不依赖模型</p></div>
+      <div class="card">
+        <h3>粘贴合同文本</h3>
+        <p class="desc">规则引擎为主、模型补充为辅；依据法条会自动送引用核验。未命中不代表合同无风险。</p>
+        <textarea class="big" id="contractText"></textarea>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="runContract">开始审查</button>
+          <button class="btn" id="sampleContract">恢复示例</button>
+        </div>
+      </div>
+      <div id="contractResult"></div>
+    </section>
+
+    <!-- 引用核验 -->
+    <section class="view hidden" id="v-verify">
+      <div class="vhead"><h1>引用核验</h1><p>从文本抽取法条与案号，结构化查库，输出六态结果</p></div>
+      <div class="card">
+        <h3>待核验文本</h3>
+        <p class="desc">试试把示例里的《合同法》第 52 条换成《民法典》第 9999 条，观察状态变化。</p>
+        <textarea class="big" id="verifyText" style="height:110px"></textarea>
+        <div style="margin-top:10px"><button class="btn primary" id="runVerify">逐条核验</button></div>
+      </div>
+      <div id="verifyResult"></div>
+    </section>
+
+    <!-- 复核导出 -->
+    <section class="view hidden" id="v-export">
+      <div class="vhead"><h1>复核与导出</h1><p>未签字禁止导出；含阻断引用一律拦截</p></div>
+      <div class="card">
+        <h3>导出四件套</h3>
+        <p class="desc">风险报告 / 核验明细 / 复核记录 / 人工智能使用声明。签字进度与右侧栏同步。</p>
+        <div class="progress"><i id="progressBar"></i></div>
+        <div id="exportStatus" class="desc">尚未生成回答。</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary" id="exportBtn" disabled>导出四件套</button>
+          <button class="btn" id="signAll">演示：一键逐条签字</button>
+        </div>
+      </div>
+      <div id="bundleView"></div>
+    </section>
+
+    <!-- 平台能力 -->
+    <section class="view hidden" id="v-platform">
+      <div class="vhead"><h1>平台能力</h1><p>第 3 期：从单人工具到团队系统</p></div>
+      <div class="grid3" id="platformCards"></div>
+      <div class="card" style="margin-top:14px">
+        <h3>伦理墙演示（E1）</h3>
+        <p class="desc">切换用户，看项目级名单如何隔离可见范围；被排除的项目根本不出现在列表里。</p>
+        <div class="field" style="max-width:320px"><span>当前用户</span>
+          <select id="whoSelect"><option>张律师</option><option>李律师</option><option>赵律师</option><option>王助理</option></select>
+          <button class="btn" id="loadMatters">查看</button>
+        </div>
+        <div id="matters"></div>
+      </div>
+    </section>
+
+    <!-- 关于 -->
+    <section class="view hidden" id="v-about">
+      <div class="vhead"><h1>关于项目</h1><p>4 期 29 项功能 · 已开源</p></div>
+      <div class="card">
+        <h3>定位</h3>
+        <p class="desc">合规优先、可自托管、可插拔权威数据源的法律智能体平台。把引用核验、人工复核、数据分级、审计留痕做成 Agent 工作流的强制必经节点，而不是生成后补个脚注。</p>
+        <p class="desc">代码仓库（含完整后端、React 工作台、MCP Server、51+ 单测与 CI）：<a href="https://github.com/Ai-Kaffey/lexguard-agent" target="_blank" rel="noopener">github.com/Ai-Kaffey/lexguard-agent</a></p>
+      </div>
+      <div class="grid2">
+        <div class="mini"><span class="tag">明确不做</span><div class="d">自建法规全文库、通用问答机器人、C 端法律意见、诉讼结果预测、电子签、声称零幻觉、无标注集就发布准确率。</div></div>
+        <div class="mini"><span class="tag">合规映射</span><div class="d">AI 仅辅助工具、公众内容标识、关键环节强制人工复核留痕、日志留存 ≥3 年、敏感数据不出域、引用回权威库全文比对、AI 使用声明。</div></div>
+        <div class="mini"><span class="tag">演示数据纪律</span><div class="d">法条只存编号 + 效力 + 主旨摘要；案号统一 DEMO-CASE；企业 DEMO- 前缀。主打防幻觉的项目自带伪造案号即自毁。</div></div>
+        <div class="mini"><span class="tag">本页边界</span><div class="d">纯前端模拟，便于快速体验交互与 UI；真实运行请 clone 仓库执行 npm run dev，可接任意 OpenAI 兼容接口与权威数据源。</div></div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="rail" id="rail">
+    <h3>引用核验与复核</h3>
+    <p class="desc">存在性、条号与时效走结构化查库，模型不裁决。演示语料只返回 demo_only。</p>
+    <div class="field"><span>复核人</span><input id="reviewer" value="张律师"></div>
+    <div id="railBody"><p class="desc">发起对话后，回答中的法条与案号会自动进入这里。</p></div>
+  </aside>
+</div>
+
+<footer>
+  LexGuard · 交互演示页｜数据与结论均为模拟，不构成法律意见、投资建议或采购建议<br>
+  完整实现与文档见 GitHub 仓库 · 2026-11-10
+</footer>
+
+<div class="modal hidden" id="modal">
+  <div class="box">
+    <div class="mh"><b id="modalTitle">导出四件套</b><span class="pill ok">已签字</span></div>
+    <div class="mb" id="modalBody"></div>
+    <div class="mf"><button class="btn" id="downloadMd">下载 .md</button><button class="btn primary" id="closeModal">关闭</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DISCLAIMER = 'AI 辅助生成，仅供参考，不构成法律意见';
+const DOC_KEY = '__document__';
+const LAW_ALIAS = {'民法典':'中华人民共和国民法典','劳动合同法':'中华人民共和国劳动合同法','消费者权益保护法':'中华人民共和国消费者权益保护法','消保法':'中华人民共和国消费者权益保护法','合同法':'中华人民共和国合同法'};
+const LAWS = [
+  ['中华人民共和国民法典',465,'依法成立的合同受法律保护，对当事人具有约束力','现行有效',''],
+  ['中华人民共和国民法典',496,'格式条款的定义，以及提供方应尽提示与说明义务','现行有效',''],
+  ['中华人民共和国民法典',497,'格式条款无效的情形，含不合理免除己方责任、排除对方主要权利','现行有效',''],
+  ['中华人民共和国民法典',500,'缔约过程中的过错责任','现行有效',''],
+  ['中华人民共和国民法典',509,'当事人应全面履行义务并遵循诚信原则','现行有效',''],
+  ['中华人民共和国民法典',563,'合同法定解除的情形','现行有效',''],
+  ['中华人民共和国民法典',577,'违约责任的承担方式','现行有效',''],
+  ['中华人民共和国民法典',584,'损失赔偿范围含可得利益，但不得超过可预见损失','现行有效',''],
+  ['中华人民共和国民法典',585,'违约金；过分高于损失时可请求适当调整','现行有效',''],
+  ['中华人民共和国民法典',590,'不可抗力与及时通知义务','现行有效',''],
+  ['中华人民共和国民法典',591,'守约方的减损义务','现行有效',''],
+  ['中华人民共和国民法典',1165,'过错侵权责任','现行有效',''],
+  ['中华人民共和国劳动合同法',10,'建立劳动关系应当订立书面劳动合同','现行有效',''],
+  ['中华人民共和国劳动合同法',39,'劳动者有法定过错情形时用人单位可解除','现行有效',''],
+  ['中华人民共和国劳动合同法',82,'未依法订立书面劳动合同应支付二倍工资','现行有效',''],
+  ['中华人民共和国消费者权益保护法',55,'经营者欺诈的惩罚性赔偿','现行有效',''],
+  ['中华人民共和国合同法',52,'合同无效的情形（旧法）','已废止','《民法典》自 2021-01-01 施行，《合同法》同时废止；应改引民法典相应条文']
+];
+const RULES = [
+  ['R01','格式条款','high',/(?:本公司|甲方|提供方)[^。；\n]{0,30}(?:无需通知|有权自行|单方决定|最终解释权)/g,'疑似单方决定权 / 最终解释权，可能构成不合理免除己方责任','《民法典》第496条；《民法典》第497条','删除最终解释权表述，改为双方协商机制并加粗提示'],
+  ['R02','免责条款','high',/(?:故意|重大过失)[^。；\n]{0,20}(?:概不负责|免责|不承担责任)/g,'对故意或重大过失造成损失的免责约定依法无效','《民法典》第497条；《民法典》第577条','删除该免责约定，改为按实际损失依法承担'],
+  ['R03','违约金','high',/违约金[^。；\n]{0,40}?(?:\d{2,}|百分之[三四五六七八九]?十)[^。；\n]{0,10}?(?:%|倍|日)/g,'违约金计算方式可能过分高于实际损失','《民法典》第585条；《民法典》第584条','约定以实际损失为基础的计算方式并设置合理上限'],
+  ['R04','解除权不对等','high',/(?:甲方|本公司)[^。；\n]{0,20}(?:有权随时|可单方|无需理由)[^。；\n]{0,12}(?:解除|终止)/g,'单方任意解除权，权利义务显著不对等','《民法典》第563条；《民法典》第497条','列明具体解除情形与通知期限，赋予对等解除权'],
+  ['R05','争议解决','medium',/(?:争议|纠纷)[^。；\n]{0,30}(?:仅由|只能向|必须提交)[^。；\n]{0,20}(?:法院|仲裁|委员会)/g,'单方指定管辖且排除对方选择权','《民法典》第496条；《民法典》第497条','改为双方协商确定管辖，或明确仲裁机构名称'],
+  ['R06','保密义务','medium',/保密[^。；\n]{0,20}(?:永久|无限期|永不终止)/g,'保密义务无期限，履行成本与边界不清','《民法典》第509条','约定保密期限与例外情形'],
+  ['R07','付款条款','medium',/付款[^。；\n]{0,20}(?:另行通知|视情况|待定)/g,'付款节点或金额不明确，易引发履行争议','《民法典》第509条；《民法典》第577条','明确金额、节点、发票与逾期责任'],
+  ['R08','自动续约','medium',/(?:自动|默认)[^。；\n]{0,10}(?:续约|续签)[^。；\n]{0,20}(?:无需|不必)[^。；\n]{0,10}通知/g,'自动续约且无需提示，属重大利害关系条款','《民法典》第496条；《民法典》第497条','增加到期前书面提醒与不续约通知机制'],
+  ['R09','劳动关系','medium',/(?:入职|用工)[^。；\n]{0,20}(?:不签|无需签订|暂不订立)[^。；\n]{0,10}(?:书面)?劳动合同/g,'建立劳动关系应订立书面劳动合同，否则有二倍工资风险','《劳动合同法》第82条','自用工之日起一个月内订立书面劳动合同'],
+  ['R10','主体信息','low',/(?:甲方|乙方)[：:]\s*(?:待填|XX|xxx|未填写)/g,'合同主体信息未填，影响相对方识别','《民法典》第465条','补全全称、信用代码、住所与授权代表']
+];
+const B = (name,no,gist,validity,note)=>({name,no,gist,validity,note});
+function law(name,no){return LAWS.find(l=>l[0]===name&&l[1]===no);}
+const CN={'零':0,'〇':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+function cn(s){if(/^\d+$/.test(s))return +s;if(!/^[零〇一二两三四五六七八九十百千]+$/.test(s))return null;let sec=0,n=0;for(const ch of s){if(ch==='千'){sec+=(n||1)*1000;n=0}else if(ch==='百'){sec+=(n||1)*100;n=0}else if(ch==='十'){sec+=(n||1)*10;n=0}else n=CN[ch]??0}return sec+n}
+function norm(name){const s=name.replace(/\s+/g,'').replace(/^《|》$/g,'');return LAW_ALIAS[s]||s}
+const LAW_RE=/《([^》]{1,40})》\s*第\s*([零〇一二两三四五六七八九十百千\d]{1,8})\s*条(?:\s*第\s*([零〇一二两三四五六七八九十百千\d]{1,8})\s*款)?/g;
+const CASE_RE=/[（(]?\d{4}[）)]?[^\s，。；：、]{0,24}?(?:民初|民终|民申|刑初|刑终|行初|民特|执异|执)\s*\d+\s*号/g;
+const DEMO_RE=/DEMO-CASE-\d{4}-\d{3}/g;
+const BROKEN_RE=/《([^》]{1,40})》\s*第\s*条/g;
+function extract(text){
+  const out=[],seen=new Set();
+  const push=o=>{const k=o.kind+':'+o.raw;if(!seen.has(k)){seen.add(k);out.push(o)}};
+  for(const m of text.matchAll(LAW_RE)){const no=cn(m[2]);if(no===null){push({raw:m[0],kind:'unknown'});continue}push({raw:m[0],kind:'law',law:norm(m[1]),no,para:m[3]?('第'+m[3]+'款'):null})}
+  for(const m of text.matchAll(DEMO_RE))push({raw:m[0],kind:'case',caseNo:m[0]});
+  for(const m of text.matchAll(CASE_RE))push({raw:m[0],kind:'case',caseNo:m[0]});
+  for(const m of text.matchAll(BROKEN_RE))push({raw:m[0],kind:'unknown'});
+  return out;
+}
+function verifyOne(o){
+  if(o.kind==='unknown')return {...o,status:'malformed',why:'引用格式无法解析，不静默丢弃，转人工确认'};
+  if(o.kind==='case'){
+    if(o.caseNo.startsWith('DEMO-CASE'))return {...o,status:'demo_only',why:'演示案例编号，非真实裁判文书案号；不得用于正式文书'};
+    return {...o,status:'not_in_corpus',why:'案号在案例库中不存在，疑似虚构案例'};
+  }
+  const hit=law(o.law,o.no);
+  if(!hit)return {...o,status:'not_in_corpus',why:'在数据源中未找到 '+o.law+' 第'+o.no+'条，疑似编造条号'};
+  if(hit[3]==='已废止')return {...o,status:'repealed',why:hit[4],hit};
+  if(o.para)return {...o,status:'needs_human',why:'已命中条号，但引用含款项定位；结构化核验不裁决款项是否存在，须回权威原文人工核对',hit};
+  return {...o,status:'demo_only',why:'命中演示语料，不构成权威库核验；正式使用须接入已授权权威数据源并调取全文',hit};
+}
+function verify(text){return extract(text).map(verifyOne)}
+function mergeCitations(...groups){const seen=new Set(),out=[];for(const g of groups)for(const c of g){if(!seen.has(c.raw)){seen.add(c.raw);out.push(c)}}return out}
+function classify(text){if(/(绝密|涉密|国家秘密|未公开裁判文书)/.test(text)||/\b\d{17}[\dXx]\b/.test(text)||/\b\d{16,19}\b/.test(text))return 'A';if(/(客户|委托人|当事人|原告|被告|案卷|病历|银行流水)/.test(text)||/\d{4,}\s*(?:元|万元)/.test(text))return 'B';return 'C'}
+function reviewContract(text){const out=[];for(const [id,cat,lv,re,why,basis,advice] of RULES){const r=new RegExp(re.source,re.flags.includes('g')?re.flags:re.flags+'g');let m,i=0;while((m=r.exec(text))!==null&&i<3){out.push({id:id+'-'+(i+1),cat,lv,quote:m[0].slice(0,80),why,basis:basis.split('；'),advice});i++}}return out}
+function withDisclaimer(t){return t.trimStart().startsWith(DISCLAIMER)?t:DISCLAIMER+'\n\n'+t}
+const STATUS={verified:'已核验',repealed:'已废止',not_in_corpus:'库中不存在',demo_only:'演示语料',malformed:'格式异常',needs_human:'转人工'};
+const BLOCK=['repealed','not_in_corpus','malformed'];
+
+const ANSWERS={
+  contract:'根据检索到的资料，提供格式条款的一方应当采取合理方式提示对方注意免除或者减轻其责任等与对方有重大利害关系的条款，并按对方要求予以说明，依据《中华人民共和国民法典》第496条；未尽提示说明义务的，对方可主张该条款不成为合同内容，依据《中华人民共和国民法典》第497条。相关演示案例：DEMO-CASE-2024-001。',
+  labor:'建立劳动关系应当订立书面劳动合同，依据《中华人民共和国劳动合同法》第10条；用人单位自用工之日起超过一个月未订立书面劳动合同的，依法应支付二倍工资，依据《中华人民共和国劳动合同法》第82条。相关演示案例：DEMO-CASE-2024-002。',
+  penalty:'当事人可以约定违约金；约定违约金过分高于造成的损失的，可请求人民法院或仲裁机构适当减少，依据《中华人民共和国民法典》第585条。损失赔偿范围包括合同履行后可以获得的利益，但不得超过违约方订立合同时预见到或应当预见到的损失，依据《中华人民共和国民法典》第584条。相关演示案例：DEMO-CASE-2023-001。',
+  general:'依法成立的合同受法律保护，对当事人具有法律约束力，依据《中华人民共和国民法典》第465条；当事人应当按照约定全面履行义务并遵循诚信原则，依据《中华人民共和国民法典》第509条。'
+};
+function topicOf(q){if(/劳动合同|二倍工资|书面合同|入职|用工/.test(q))return 'labor';if(/违约金|赔偿|损失|调减/.test(q))return 'penalty';if(/合同|条款|协议|审查|风险/.test(q))return 'contract';return 'general'}
+
+const state={view:'workbench',messages:[],citations:[],signed:new Set(),records:[],reviewer:'张律师',answer:'',toolName:'LexGuard / Mock LLM',busy:false,bundle:null};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200)}
+
+function switchView(v){state.view=v;document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('on',b.dataset.view===v));document.querySelectorAll('.view').forEach(s=>s.classList.add('hidden'));$('v-'+v).classList.remove('hidden')}
+document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+
+function renderChat(){
+  const box=$('chat');
+  if(!state.messages.length){box.innerHTML='<div class="empty"><b>从下面的问题开始</b>或直接输入合同片段。演示会走完「工具调用 → 流式回答 → 引用核验 → 逐条签字 → 导出四件套」。</div>';return}
+  box.innerHTML=state.messages.map(m=>{
+    const tools=(m.tools||[]).map(t=>'<details class="toolcard" open><summary>工具调用 · '+esc(t.name)+' '+(t.result?'✓':'…')+'</summary><div class="tres">参数：'+esc(t.args)+'\n\n'+esc(t.result||'执行中…')+'</div></details>').join('');
+    return '<div class="m '+(m.role==='user'?'me':'')+'"><div class="who">'+(m.role==='user'?'你':'LexGuard')+'</div><div class="bub">'+esc(m.content||'')+'</div>'+tools+'</div>';
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function patchLast(fn){const arr=state.messages;const i=arr.map(m=>m.role).lastIndexOf('assistant');if(i>=0)arr[i]=fn(arr[i]);renderChat()}
+
+async function runDemo(q){
+  if(!q.trim()||state.busy)return;
+  state.busy=true;$('send').disabled=true;
+  const dc=classify(q);
+  $('dcChip').textContent='数据分级 '+dc+(dc==='A'?' · 已阻断外部调用':' · 本地演示');
+  $('dcChip').className='pill '+(dc==='A'?'warn':'ok');
+  $('stageChip').textContent='状态：工具调用中';
+  state.citations=[];state.signed=new Set();state.records=[];state.answer='';state.bundle=null;
+  state.messages.push({role:'user',content:q,tools:[]},{role:'assistant',content:'',tools:[]});
+  renderChat();renderRail();renderExport();
+  const t=topicOf(q);
+  const useContract=t==='contract';
+  const toolName=useContract?'review_contract':'rag_search';
+  const args=useContract?JSON.stringify({text:q.slice(0,300)}):JSON.stringify({query:q.slice(0,120)});
+  patchLast(m=>({...m,tools:[{name:toolName,args,result:''}]}));
+  await sleep(420);
+  const toolResult=useContract
+    ? '规则引擎初筛完成；依据法条已送入核验队列。\n（演示：不执行真实合同全文分析）'
+    : 'BM25 检索命中演示法规片段，每条带出处。\n（演示：本地 DEMO 语料）';
+  patchLast(m=>({...m,tools:m.tools.map(x=>({...x,result:toolResult}))}));
+  await sleep(220);
+  $('stageChip').textContent='状态：生成回答中';
+  const answer='【演示回答｜数据来自本地 DEMO 语料，非法律意见】\n\n'+ANSWERS[t]+'\n\n注意：上述命中均为演示语料（demo_only），不构成权威库核验；正式使用须接入已授权权威数据源，并由承办人员回原文逐条核对。';
+  for(let i=0;i<answer.length;i+=18){patchLast(m=>({...m,content:m.content+answer.slice(i,i+18)}));await sleep(12)}
+  state.answer=answer;
+  state.citations=verify(answer);
+  $('stageChip').textContent='状态：引用已核验，待复核签字';
+  renderRail();renderExport();
+  toast('生成完成：'+state.citations.length+' 条引用进入复核队列');
+  state.busy=false;$('send').disabled=false;renderChat();
+}
+
+function pendingKeys(){return [DOC_KEY,...state.citations.map(c=>c.raw)].filter(k=>!state.signed.has(k))}
+function allSigned(){return pendingKeys().length===0}
+function sign(key){
+  if(state.signed.has(key)||!state.reviewer.trim())return;
+  state.signed.add(key);
+  state.records.push({key,reviewer:state.reviewer,decision:'approved',at:new Date().toISOString()});
+  renderRail();renderExport();
+}
+function buildBundle(){
+  const statusLine=c=>'- '+c.raw+'\n  状态：'+(STATUS[c.status]||c.status)+'\n  说明：'+c.why+(c.hit?'\n  效力级别：法律｜'+c.hit[3]+'\n  出处：DEMO-LOCAL-FIXTURE':'');
+  return {
+    riskReport:withDisclaimer(state.answer),
+    verificationDetail:'# 法条 / 案例引用核验明细\n\n'+(state.citations.length?state.citations.map(statusLine).join('\n'):'（未检出引用）'),
+    reviewLog:'# 人工复核记录\n\n'+(state.records.length?state.records.map(r=>'- '+r.key+'｜'+r.decision+'｜复核人：'+r.reviewer+'｜时间：'+r.at).join('\n'):'（无复核记录）'),
+    declaration:'# 人工智能使用声明\n\n- 工具名称：'+state.toolName+'\n- 使用环节：合同审查、法条引用核验、法律文书起草\n- 人工核验人：'+state.reviewer+'\n- 生成时间：'+new Date().toISOString()+'\n\n## 逐项核验清单\n'+(state.citations.length?state.citations.map((c,i)=>(i+1)+'. '+c.raw+' —— '+c.status).join('\n'):'（无引用）')+'\n\n## 人工复核签字明细\n'+state.records.map(r=>'- '+r.key+'｜approved｜'+r.reviewer+'｜'+r.at).join('\n')+'\n\n本人承诺：已对本文书所涉事实、证据、法条与参考案例逐项核验；已采取合理措施识别并防范生成式人工智能产生的失实内容；文书由承办人员实质审核并签字确认，依法对内容真实性、准确性承担责任。\n\n'+DISCLAIMER
+  };
+}
+function bundleText(b){return [b.riskReport,b.verificationDetail,b.reviewLog,b.declaration].join('\n\n---\n\n')}
+
+function renderRail(){
+  const box=$('railBody');
+  if(!state.citations.length){box.innerHTML='<p class="desc">发起对话后，回答中的法条与案号会自动进入这里。</p>';return}
+  const docDone=state.signed.has(DOC_KEY);
+  let h='<div class="progress"><i style="width:'+Math.round((state.signed.size/(state.citations.length+1))*100)+'%"></i></div>';
+  h+='<div class="okbox">引用 '+state.citations.length+' 条｜已签 '+state.signed.size+'/'+(state.citations.length+1)+'</div>';
+  h+='<button class="btn '+(docDone?'done':'primary')+'" data-sign="'+DOC_KEY+'" style="width:100%;margin-bottom:10px">'+(docDone?'✓ 文档已整体签字':'文档整体签字')+'</button>';
+  for(const c of state.citations){
+    const done=state.signed.has(c.raw);
+    h+='<div class="cit"><div class="raw">'+esc(c.raw)+'<span class="st '+c.status+'">'+(STATUS[c.status]||c.status)+'</span></div><div class="why">'+esc(c.why)+'</div>'+(c.hit?'<div class="why">'+esc(c.hit[0])+' 第'+c.hit[1]+'条｜'+esc(c.hit[2])+'</div>':'')+'<button class="btn '+(done?'done':'')+'" data-sign="'+esc(c.raw)+'" '+(done?'disabled':'')+'>'+(done?'✓ 已逐条确认':'逐条确认签字')+'</button></div>';
+  }
+  box.innerHTML=h;
+  box.querySelectorAll('[data-sign]').forEach(b=>b.addEventListener('click',()=>{sign(b.dataset.sign);toast('已签字：'+(b.dataset.sign===DOC_KEY?'文档整体':b.dataset.sign))}));
+}
+function renderExport(){
+  const done=allSigned()&&state.answer;
+  const blocking=state.citations.some(c=>BLOCK.includes(c.status));
+  $('progressBar').style.width=(state.answer?Math.round((state.signed.size/(state.citations.length+1))*100):0)+'%';
+  $('exportStatus').textContent=!state.answer?'尚未生成回答。':blocking?'检出阻断引用（已废止 / 库中不存在 / 格式异常），须修正后重新生成，禁止导出。':done?'复核已完成，可以导出四件套。':'待签 '+pendingKeys().length+' 项：'+pendingKeys().slice(0,3).join('、')+(pendingKeys().length>3?' …':'');
+  $('exportBtn').disabled=!(done&&!blocking);
+  $('bundleView').innerHTML='';
+  if(state.bundle){
+    $('bundleView').innerHTML='<div class="card"><h3>最近一次导出</h3>'+[['风险报告',state.bundle.riskReport],['核验明细',state.bundle.verificationDetail],['复核记录',state.bundle.reviewLog],['AI 使用声明',state.bundle.declaration]].map(([t,b])=>'<details class="card" style="margin:8px 0;padding:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600">'+t+'</summary><pre style="font-size:11px;white-space:pre-wrap;margin:8px 0 0;color:var(--ink-2)">'+esc(b)+'</pre></details>').join('')+'</div>';
+  }
+}
+function openBundle(){state.bundle=buildBundle();renderExport();$('modalBody').textContent=bundleText(state.bundle);$('modal').classList.remove('hidden')}
+
+const QUICK=['这份合同有哪些风险？帮我指出依据法条','格式条款未尽提示说明义务有什么后果？','未签书面劳动合同的二倍工资依据是什么？','违约金过高能否请求调整？','核验这段文本：《中华人民共和国合同法》第52条'];
+$('quick').innerHTML=QUICK.map(q=>'<button>'+esc(q)+'</button>').join('');
+$('quick').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{switchView('workbench');$('input').value=b.textContent;runDemo(b.textContent)}));
+$('send').addEventListener('click',()=>{const q=$('input').value;runDemo(q);$('input').value=''});
+$('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){const q=$('input').value;runDemo(q);$('input').value=''}});
+$('reviewer').addEventListener('input',e=>{state.reviewer=e.target.value;renderRail();renderExport()});
+$('reset').addEventListener('click',()=>{state.messages=[];state.citations=[];state.signed=new Set();state.records=[];state.answer='';state.bundle=null;renderChat();renderRail();renderExport();$('stageChip').textContent='状态：待提问';toast('演示已重置')});
+$('exportBtn').addEventListener('click',openBundle);
+$('signAll').addEventListener('click',()=>{if(!state.answer){toast('请先在工作台生成一次回答');return}for(const k of pendingKeys())sign(k);toast('已逐条签字，共 '+state.records.length+' 条');});
+$('closeModal').addEventListener('click',()=>$('modal').classList.add('hidden'));
+$('downloadMd').addEventListener('click',()=>{if(!state.bundle)return;const url=URL.createObjectURL(new Blob([bundleText(state.bundle)],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='LexGuard-四件套.md';a.click();URL.revokeObjectURL(url)});
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').classList.add('hidden')});
+
+const SAMPLE=['甲方：XX，乙方：待填。','本公司有权自行决定合同解释，并保留最终解释权。','因故意或重大过失造成对方损失的，本公司概不负责。','违约金按未付款金额每日 30% 计算。','甲方有权随时解除本协议，无需理由。','保密义务永久有效，不得终止。','争议仅由甲方所在地法院管辖。','付款期限另行通知。','入职后暂不订立书面劳动合同。'].join('\n');
+$('contractText').value=SAMPLE;
+$('sampleContract').addEventListener('click',()=>{$('contractText').value=SAMPLE;$('contractResult').innerHTML=''});
+$('runContract').addEventListener('click',()=>{
+  const text=$('contractText').value,risks=reviewContract(text);
+  const cs=verify(risks.flatMap(r=>r.basis).join('；'));
+  const hi=risks.filter(r=>r.lv==='high').length,mid=risks.filter(r=>r.lv==='medium').length,low=risks.filter(r=>r.lv==='low').length;
+  let h='<div class="card"><h3>审查结果</h3><div class="okbox">数据分级 '+classify(text)+'｜命中 '+risks.length+' 处风险：高 '+hi+' / 中 '+mid+' / 低 '+low+'；依据引用 '+cs.length+' 条（'+ (cs[0]?STATUS[cs[0].status]:'无') +'）</div><p class="desc">规则结果可复现、可单测；未命中不代表合同无风险，关键条款须人工复核。</p></div>';
+  h+=risks.map(r=>'<div class="risk"><div class="q"><span class="lv '+r.lv+'">'+({high:'高',medium:'中',low:'低'}[r.lv])+'</span>'+esc(r.cat)+'｜'+esc(r.quote)+'</div><div class="r">'+esc(r.why)+'</div><div class="r">依据：'+r.basis.map(esc).join('、')+'</div><div class="s">建议：'+esc(r.advice)+'</div></div>').join('');
+  $('contractResult').innerHTML=h||'<div class="card"><p class="desc">未命中演示规则库中的风险模式。</p></div>';
+});
+$('verifyText').value='依据《中华人民共和国合同法》第52条、《中华人民共和国民法典》第9999条，以及《中华人民共和国民法典》第496条，参见 DEMO-CASE-2024-001 与《民法典》第条。';
+$('runVerify').addEventListener('click',()=>{
+  const cs=verify($('verifyText').value);
+  let h='<div class="card"><h3>核验结果 · '+cs.length+' 条引用</h3><p class="desc">结构化查库判定存在性与时效；模型不参与裁决。演示语料只返回 demo_only。</p></div>';
+  h+=cs.map(c=>'<div class="cit"><div class="raw">'+esc(c.raw)+'<span class="st '+c.status+'">'+(STATUS[c.status]||c.status)+'</span></div><div class="why">'+esc(c.why)+'</div>'+(c.hit?'<div class="why">'+esc(c.hit[0])+' 第'+c.hit[1]+'条｜'+esc(c.hit[2])+'</div>':'')+'</div>').join('');
+  $('verifyResult').innerHTML=h||'<div class="card"><p class="desc">未检出引用。</p></div>';
+});
+
+const PLATFORM=[
+  ['C4 Skill 中心','三份版本化清单；同版本禁止覆盖、必填项逐项确认、可导入导出','组织资产'],
+  ['C5 案件事实层','每条事实强制带出处；矛盾显式挂起，不合并、不投票、不让模型裁决','事实可信'],
+  ['D4 MCP Server','零依赖 stdio JSON-RPC，暴露 6 个法律工具，供 Claude / WorkBuddy 调用','生态接入'],
+  ['E1 多租户与伦理墙','角色权限矩阵 + 项目级名单，被排除项目根本不出现在列表里','权限隔离'],
+  ['E2 数据源管理','健康检查 + 失败降级；降级后核验自动转 demo_only，不伪装权威结果','可观测'],
+  ['E3 用量与成本','按会话记录工具调用与 token 估算，明确标注非厂商计费口径','成本可见']
+];
+$('platformCards').innerHTML=PLATFORM.map(([t,d,tag])=>'<div class="mini"><span class="tag">'+tag+'</span><div class="t">'+t+'</div><div class="d">'+d+'</div></div>').join('');
+const MATTERS={'张律师':['甲公司并购尽调（演示）','乙公司合同纠纷（演示）'],'李律师':['甲公司并购尽调（演示）'],'赵律师':['甲公司并购尽调（演示）','乙公司合同纠纷（演示）'],'王助理':['乙公司合同纠纷（演示）']};
+$('loadMatters').addEventListener('click',()=>{const u=$('whoSelect').value;const list=MATTERS[u]||[];$('matters').innerHTML='<div class="okbox">'+esc(u)+' 可见 '+list.length+' 个项目</div>'+list.map(m=>'<div class="cit"><div class="raw">'+esc(m)+'</div></div>').join('')});
+
+renderChat();renderRail();renderExport();
+</script>
+</body>
+</html>

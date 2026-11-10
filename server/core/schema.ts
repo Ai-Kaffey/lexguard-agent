@@ -119,6 +119,7 @@ export interface Declaration {
   reviewedBy: string;
   generatedAt: string;
   items: { citation: string; status: string }[];
+  reviewRecords: { key: string; decision: string; reviewer: string; at: string }[];
   statement: string;
 }
 
